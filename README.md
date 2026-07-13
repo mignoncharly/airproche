@@ -120,3 +120,10 @@ staff access, a mandatory production staff network gate, fragment-only bearer
 links, explicit Stripe live-mode confirmation, production CSP, log redaction,
 shared throttling, retention/anonymization commands, and repeatable dependency
 and secret scans. See [security and privacy hardening](docs/SECURITY_PRIVACY.md).
+
+## Release qualification
+
+Run `scripts/release-qualification.sh` from a clean commit for backend checks,
+all tests, frontend production/browser checks, dependency audits, and repository
+safety scans. The dedicated PostgreSQL backup/restore rehearsal is required
+before production deployment. See [release qualification](docs/RELEASE_QUALIFICATION.md).
