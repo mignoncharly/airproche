@@ -9,6 +9,7 @@ from apps.content.models import BusinessSettings
 from apps.locations.models import Airport, ServiceArea
 from apps.pricing.models import Quote, QuoteLine, Tariff, TripType
 from apps.bookings.models import Booking, BookingStatusHistory, PriceSnapshot
+from apps.notifications.models import EmailNotification
 
 
 @pytest.fixture
@@ -70,3 +71,26 @@ def test_guest_can_cancel_before_deadline(client, open_quote):
     response = client.post(reverse("bookings:cancel", args=[created["public_id"]]), {"reason": "Changement de programme"}, content_type="application/json", HTTP_X_BOOKING_TOKEN=created["management_token"])
     assert response.status_code == 200
     assert response.json()["status"] == Booking.Status.CANCELLED
+
+@pytest.mark.django_db
+def test_booking_commit_survives_email_failure(
+    client, open_quote, django_capture_on_commit_callbacks, monkeypatch
+):
+    def fail_delivery(*args, **kwargs):
+        raise OSError("simulated SMTP outage")
+
+    monkeypatch.setattr("apps.notifications.services.send_mail", fail_delivery)
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.post(
+            reverse("bookings:create"),
+            create_payload(open_quote),
+            content_type="application/json",
+            HTTP_IDEMPOTENCY_KEY="booking-email-failure",
+        )
+        assert response.status_code == 201
+        assert Booking.objects.filter(public_id=response.json()["public_id"]).exists()
+        assert not EmailNotification.objects.exists()
+
+    notification = EmailNotification.objects.get()
+    assert notification.status == EmailNotification.Status.FAILED
+    assert Booking.objects.filter(public_id=response.json()["public_id"]).exists()

@@ -10,6 +10,7 @@ from rest_framework.exceptions import APIException, NotFound, PermissionDenied
 
 from apps.bookings.models import Booking, BookingStatusHistory
 from apps.bookings.services import can_access
+from apps.notifications.services import enqueue_booking_notification
 
 from .models import Payment, PaymentAttempt, Refund, WebhookEvent
 from .stripe_adapter import (
@@ -205,7 +206,8 @@ def apply_checkout_session(session: dict) -> tuple[Payment, str]:
         old_status = booking.status
         booking.status = Booking.Status.CONFIRMED
         booking.save(update_fields=("status", "updated_at"))
-        BookingStatusHistory.objects.create(booking=booking, from_status=old_status, to_status=booking.status, note="Paiement Stripe vérifié.")
+        history = BookingStatusHistory.objects.create(booking=booking, from_status=old_status, to_status=booking.status, note="Paiement Stripe vérifié.")
+        enqueue_booking_notification(booking.pk, f"status:{history.pk}")
         return payment, "confirmed"
     if booking.status == Booking.Status.CANCELLED:
         return payment, "paid_cancelled_booking"

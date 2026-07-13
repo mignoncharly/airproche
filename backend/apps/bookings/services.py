@@ -13,6 +13,7 @@ from django.utils import timezone
 from rest_framework.exceptions import APIException, NotFound, PermissionDenied
 
 from apps.content.models import BusinessSettings, LegalDocument
+from apps.notifications.services import enqueue_booking_notification
 
 from .models import (
     AddressSnapshot, Booking, BookingStatusHistory, CancellationPolicySnapshot,
@@ -144,6 +145,7 @@ def create_booking(data: dict, *, user=None, idempotency_key: str = "", correlat
     GuestAccessToken.objects.create(booking=booking, token_digest=token_digest(raw_token), expires_at=now + timedelta(days=30))
     if idempotency_key:
         IdempotencyRecord.objects.create(scope="booking-create", key=idempotency_key, request_hash=request_hash, booking=booking, response_status=201, expires_at=now + timedelta(days=2))
+    enqueue_booking_notification(booking.pk, "created", created=True)
     return _booking_queryset().get(pk=booking.pk), raw_token, False
 
 
@@ -200,7 +202,8 @@ def transition_booking(booking_id, to_status: str, *, actor=None, note="", corre
     if to_status == Booking.Status.CANCELLED:
         booking.cancelled_at = timezone.now()
     booking.save(update_fields=("status", "cancelled_at", "updated_at"))
-    BookingStatusHistory.objects.create(booking=booking, from_status=old_status, to_status=to_status, actor=actor, note=note, correlation_id=correlation_id)
+    history = BookingStatusHistory.objects.create(booking=booking, from_status=old_status, to_status=to_status, actor=actor, note=note, correlation_id=correlation_id)
+    enqueue_booking_notification(booking.pk, f"status:{history.pk}")
     return _booking_queryset().get(pk=booking.pk)
 
 
@@ -219,5 +222,6 @@ def cancel_booking(booking_id, *, actor=None, raw_token="", reason="", idempoten
     booking.cancellation_reason = reason
     booking.cancellation_outcome = "eligible"
     booking.save(update_fields=("status", "cancelled_at", "cancellation_reason", "cancellation_outcome", "updated_at"))
-    BookingStatusHistory.objects.create(booking=booking, from_status=old_status, to_status=booking.status, actor=actor, note=reason, correlation_id=correlation_id)
+    history = BookingStatusHistory.objects.create(booking=booking, from_status=old_status, to_status=booking.status, actor=actor, note=reason, correlation_id=correlation_id)
+    enqueue_booking_notification(booking.pk, f"status:{history.pk}")
     return _booking_queryset().get(pk=booking.pk)

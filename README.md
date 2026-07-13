@@ -88,3 +88,11 @@ Phase 8 adds the authenticated `/compte` dashboard with upcoming and past bookin
 ## Operations dashboard
 
 Phase 9 adds the staff-only `/operations` dashboard with real booking KPIs, filters, controlled transitions, notes, payment/refund visibility, and driver/vehicle assignment. Assignment conflicts and capacity overrides require an explicit reason and all sensitive changes are audited. See [operations dashboard](docs/OPERATIONS_DASHBOARD.md).
+## Notifications and contact
+
+Phase 10 persists supported email notifications and delivery attempts, sends
+booking/account/contact mail outside business transactions, and exposes
+permission-scoped staff observability and retry actions. The public contact form
+uses CSRF, rate limiting, a honeypot, a form-age trap, fixed topics, control
+character rejection, and idempotency. See
+[notifications and contact](docs/NOTIFICATIONS_CONTACT.md).

@@ -11,5 +11,13 @@ urlpatterns = [
     path("api/v1/bookings/", include("apps.bookings.urls")),
     path("api/v1/payments/", include("apps.payments.urls")),
     path("api/v1/staff/", include(("apps.core.staff_urls", "staff"), namespace="staff")),
-    path("api/v1/staff/operations/", include(("apps.operations.urls", "operations"), namespace="operations")),
+    path(
+        "api/v1/staff/operations/",
+        include(("apps.operations.urls", "operations"), namespace="operations"),
+    ),
+    path("api/v1/contact/", include("apps.notifications.public_urls")),
+    path(
+        "api/v1/staff/communications/",
+        include(("apps.notifications.urls", "communications"), namespace="communications"),
+    ),
 ]

@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     "apps.bookings",
     "apps.payments",
     "apps.operations",
+    "apps.notifications",
 ]
 
 MIDDLEWARE = [
@@ -181,6 +182,9 @@ REST_FRAMEWORK = {
         "payment_webhook": "300/minute",
         "operations_read": "120/minute",
         "operations_mutation": "30/minute",
+        "contact_submit": "5/hour",
+        "notification_read": "120/minute",
+        "notification_mutation": "30/minute",
     },
 }
 
