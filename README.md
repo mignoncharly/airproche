@@ -96,3 +96,10 @@ permission-scoped staff observability and retry actions. The public contact form
 uses CSRF, rate limiting, a honeypot, a form-age trap, fixed topics, control
 character rejection, and idempotency. See
 [notifications and contact](docs/NOTIFICATIONS_CONTACT.md).
+## Progressive Web App
+
+Phase 11 adds an installable public shell, native Android prompting where
+supported, accurate Safari installation guidance, explicit service-worker
+updates, and a generic offline page. Cache Storage contains only a fixed static
+allow-list and never customer, booking, payment, authenticated API, cookie, or
+token data. See [PWA architecture](docs/PWA.md).

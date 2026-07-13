@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Airproche">
+  <rect width="512" height="512" fill="#175cd3"/>
+  <path d="M154 280.5 354 180.5 271.4 354.4 240 283.1 154 280.5Z" fill="#fff"/>
+  <path d="m240 283.1 50.4-47.8" fill="none" stroke="#10213f" stroke-linecap="round" stroke-width="20.8"/>
+</svg>
