@@ -4,8 +4,9 @@ import { Icon } from "@/components/icon";
 import { ContactCta, PageHero, SectionHeading } from "@/components/marketing";
 import { serviceHighlights } from "@/lib/marketing-data";
 import { getPublicContent } from "@/lib/public-content";
+import { publicMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Services", description: "Accueil aéroport, aide aux bagages et transport privé vers la destination prévue." };
+export const metadata: Metadata = publicMetadata("Services", "Accueil aéroport, aide aux bagages et transport privé vers la destination prévue.", "/services");
 
 const additionalServices = [
   { icon: "hotel" as const, title: "Hôtels et hébergements", description: "Une dépose à l’adresse indiquée, avec les informations utiles préparées avant le départ." },

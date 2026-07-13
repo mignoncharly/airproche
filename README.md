@@ -103,3 +103,12 @@ supported, accurate Safari installation guidance, explicit service-worker
 updates, and a generic offline page. Cache Storage contains only a fixed static
 allow-list and never customer, booking, payment, authenticated API, cookie, or
 token data. See [PWA architecture](docs/PWA.md).
+
+## SEO, analytics, and performance
+
+Phase 12 publishes canonical metadata, robots and sitemap output, and JSON-LD
+only from real public content and tariff-backed locations. Conversion events
+are consent-gated, schema allow-listed, and reject personal data before any
+dispatch. A Playwright Pixel 7 profile enforces checked-in navigation, script,
+layout-shift, and overflow budgets. See
+[SEO, analytics, and performance](docs/SEO_ANALYTICS_PERFORMANCE.md).

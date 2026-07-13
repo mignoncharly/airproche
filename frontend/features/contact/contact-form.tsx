@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { FormStatus } from "@/components/auth/auth-shell";
+import { trackConversion } from "@/lib/analytics";
 import { submitContact, type ContactInput } from "@/lib/contact-api";
 
 const initialInput: Omit<ContactInput, "form_started_at"> = {
@@ -40,6 +41,7 @@ export function ContactForm() {
         idempotencyKey.current,
       );
       setStatus("sent");
+      trackConversion("contact_submitted", { topic: input.topic });
       setInput(initialInput);
       startedAt.current = Date.now();
       idempotencyKey.current = crypto.randomUUID();

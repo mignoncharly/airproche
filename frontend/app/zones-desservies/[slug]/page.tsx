@@ -6,6 +6,7 @@ import { Icon } from "@/components/icon";
 import { ContactCta, PageHero, SectionHeading } from "@/components/marketing";
 import { getLocationsAndCoverage, getServiceArea } from "@/lib/locations-pricing";
 import { getPublicContent } from "@/lib/public-content";
+import { publicMetadata } from "@/lib/seo";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -18,11 +19,15 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const area = await getServiceArea(slug);
-  if (!area) return { title: "Zone indisponible" };
-  return {
-    title: `Transferts aéroport — ${area.name}`,
-    description: area.description || `Consultez les trajets aéroport actuellement tarifés pour ${area.name}.`,
-  };
+  if (!area) {
+    return { title: "Zone indisponible", robots: { index: false, follow: false } };
+  }
+  return publicMetadata(
+    `Transferts aéroport — ${area.name}`,
+    area.description ||
+      `Consultez les trajets aéroport actuellement tarifés pour ${area.name}.`,
+    `/zones-desservies/${area.slug}`,
+  );
 }
 
 export default async function ServiceAreaPage({ params }: PageProps) {

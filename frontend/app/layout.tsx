@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
+import { AnalyticsConsentBanner } from "@/components/analytics-consent";
 import { PwaManager } from "@/components/pwa-manager";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -47,6 +48,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <div id="contenu">{children}</div>
         <SiteFooter settings={settings} />
         <PwaManager />
+        <AnalyticsConsentBanner />
       </body>
     </html>
   );

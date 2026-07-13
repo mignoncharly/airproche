@@ -1,17 +1,19 @@
-import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
 import { Icon } from "@/components/icon";
 import { ContactCta, Eyebrow, SectionHeading } from "@/components/marketing";
+import { StructuredData } from "@/components/structured-data";
 import { processSteps, serviceHighlights, trustPoints } from "@/lib/marketing-data";
 import { getLocationsAndCoverage } from "@/lib/locations-pricing";
 import { getPublicContent } from "@/lib/public-content";
+import { businessStructuredData, publicMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Transport privé depuis les aéroports",
-  description: "Préparez l’accueil et le transport privé d’un proche ou de votre groupe avec des étapes claires.",
-};
+export const metadata = publicMetadata(
+  "Transport privé depuis les aéroports",
+  "Préparez l’accueil et le transport privé d’un proche ou de votre groupe avec des étapes claires.",
+  "/",
+);
 
 export default async function HomePage() {
   const [content, locationData] = await Promise.all([
@@ -20,9 +22,11 @@ export default async function HomePage() {
   ]);
   const estimationAvailable = locationData.coverage.routes.length > 0;
   const services = content.services.length ? content.services : serviceHighlights;
+  const structuredData = businessStructuredData(content.settings, content.services);
 
   return (
     <main>
+      <StructuredData data={structuredData} />
       <section className="relative overflow-hidden bg-[#f7faff]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(147,197,253,0.34),transparent_30rem)]" aria-hidden="true" />
         <div className="site-container relative grid items-center gap-12 py-16 sm:py-24 lg:grid-cols-[1.03fr_0.97fr] lg:py-28">

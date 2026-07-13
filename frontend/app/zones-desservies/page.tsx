@@ -5,11 +5,13 @@ import { Icon } from "@/components/icon";
 import { ContactCta, EmptyNotice, PageHero } from "@/components/marketing";
 import { getLocationsAndCoverage } from "@/lib/locations-pricing";
 import { getPublicContent } from "@/lib/public-content";
+import { publicMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Zones desservies",
-  description: "Consultez les zones disposant actuellement d’au moins un trajet aéroport tarifé.",
-};
+export const metadata: Metadata = publicMetadata(
+  "Zones desservies",
+  "Consultez les zones disposant actuellement d’au moins un trajet aéroport tarifé.",
+  "/zones-desservies",
+);
 
 const areaLabels = {
   city: "Ville",

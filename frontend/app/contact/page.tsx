@@ -5,8 +5,9 @@ import { Icon } from "@/components/icon";
 import { PageHero, SectionHeading } from "@/components/marketing";
 import { ContactForm } from "@/features/contact/contact-form";
 import { getPublicContent } from "@/lib/public-content";
+import { publicMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Contact", description: "Coordonnées officielles et informations à préparer pour une demande de transport." };
+export const metadata: Metadata = publicMetadata("Contact", "Coordonnées officielles et informations à préparer pour une demande de transport.", "/contact");
 
 export default async function ContactPage() {
   const { settings } = await getPublicContent();

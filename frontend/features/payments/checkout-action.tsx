@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { trackConversion } from "@/lib/analytics";
 import { type Booking } from "@/lib/booking-api";
 import { PaymentApiError, createStripeCheckout } from "@/lib/payment-api";
 
@@ -12,6 +13,7 @@ export function CheckoutAction({ booking }: { booking: Booking }) {
     const token = booking.management_token ?? "";
     setLoading(true); setError(null);
     try {
+      trackConversion("payment_started", { provider: "stripe", currency: booking.currency });
       const result = await createStripeCheckout(booking.public_id, token);
       window.sessionStorage.setItem(`booking-management-token:${booking.public_id}`, token);
       window.location.assign(result.checkoutUrl);

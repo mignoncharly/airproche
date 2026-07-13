@@ -4,8 +4,10 @@ import { notFound } from "next/navigation";
 
 import { Icon } from "@/components/icon";
 import { ContactCta, EmptyNotice, PageHero, SectionHeading } from "@/components/marketing";
+import { StructuredData } from "@/components/structured-data";
 import { getAirport, getLocationsAndCoverage } from "@/lib/locations-pricing";
 import { getPublicContent } from "@/lib/public-content";
+import { airportStructuredData, publicMetadata } from "@/lib/seo";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -18,13 +20,15 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const airport = await getAirport(slug);
-  if (!airport) return { title: "Aéroport indisponible" };
-  return {
-    title: airport.seo_title || `Transferts privés — ${airport.name}`,
-    description:
-      airport.seo_description ||
+  if (!airport) {
+    return { title: "Aéroport indisponible", robots: { index: false, follow: false } };
+  }
+  return publicMetadata(
+    airport.seo_title || `Transferts privés — ${airport.name}`,
+    airport.seo_description ||
       `Consultez les zones et trajets tarifés actuellement disponibles pour ${airport.name}.`,
-  };
+    `/aeroports/${airport.slug}`,
+  );
 }
 
 export default async function AirportPage({ params }: PageProps) {
@@ -42,6 +46,7 @@ export default async function AirportPage({ params }: PageProps) {
 
   return (
     <main>
+      <StructuredData data={airportStructuredData(airport)} />
       <PageHero
         eyebrow={`${airport.iata_code} · ${airport.city}`}
         title={`Transferts privés pour ${airport.name}`}

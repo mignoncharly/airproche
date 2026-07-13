@@ -388,3 +388,40 @@ def test_non_staff_user_cannot_use_staff_api_even_with_model_permission(client, 
     response = client.get(reverse("staff:airport-detail", args=[airport.public_id]))
 
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_public_locations_require_a_current_active_tariff(client, priced_route):
+    airport, area, tariff, _ = priced_route
+    uncovered_airport = Airport.objects.create(
+        name="Uncovered active airport",
+        iata_code="UNC",
+        slug="uncovered-active-airport",
+        city="Paris",
+        address="Unpublished",
+        latitude=0,
+        longitude=0,
+    )
+    uncovered_area = ServiceArea.objects.create(
+        name="Uncovered active area",
+        slug="uncovered-active-area",
+        area_type=ServiceArea.AreaType.CITY,
+    )
+
+    airport_list = client.get(reverse("locations:airport-list")).json()
+    area_list = client.get(reverse("locations:service-area-list")).json()
+    assert [item["public_id"] for item in airport_list] == [str(airport.public_id)]
+    assert [item["public_id"] for item in area_list] == [str(area.public_id)]
+    assert (
+        client.get(reverse("locations:airport-detail", args=[uncovered_airport.slug])).status_code
+        == 404
+    )
+    assert (
+        client.get(reverse("locations:service-area-detail", args=[uncovered_area.slug])).status_code
+        == 404
+    )
+
+    tariff.is_active = False
+    tariff.save(update_fields=("is_active", "updated_at"))
+    assert client.get(reverse("locations:airport-list")).json() == []
+    assert client.get(reverse("locations:service-area-list")).json() == []

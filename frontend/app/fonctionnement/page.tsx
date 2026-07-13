@@ -4,8 +4,9 @@ import { Icon } from "@/components/icon";
 import { ContactCta, PageHero } from "@/components/marketing";
 import { processSteps } from "@/lib/marketing-data";
 import { getPublicContent } from "@/lib/public-content";
+import { publicMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Comment ça marche", description: "Les étapes prévues entre la préparation de la demande et l’arrivée à destination." };
+export const metadata: Metadata = publicMetadata("Comment ça marche", "Les étapes prévues entre la préparation de la demande et l’arrivée à destination.", "/fonctionnement");
 
 export default async function HowItWorksPage() {
   const { settings } = await getPublicContent();

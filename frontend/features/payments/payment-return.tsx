@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { trackConversion } from "@/lib/analytics";
 import { PaymentApiError, type Payment, getPaymentStatus } from "@/lib/payment-api";
 import { formatMoney } from "@/lib/locations-pricing";
 
@@ -10,6 +11,7 @@ export function PaymentReturn({ bookingId, sessionId, cancelled }: { bookingId: 
   const [payment, setPayment] = useState<Payment | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(!cancelled);
+  const trackedSuccess = useRef(false);
 
   useEffect(() => {
     if (cancelled) return;
@@ -20,6 +22,10 @@ export function PaymentReturn({ bookingId, sessionId, cancelled }: { bookingId: 
         const result = await getPaymentStatus(bookingId, sessionId);
         if (!active) return;
         setPayment(result);
+        if (result.status === "succeeded" && !trackedSuccess.current) {
+          trackConversion("payment_succeeded", { provider: "stripe", currency: result.currency });
+          trackedSuccess.current = true;
+        }
         if (["succeeded", "failed", "canceled", "mismatched", "refunded"].includes(result.status) || attempts >= 5) setChecking(false);
         else { attempts += 1; window.setTimeout(poll, 2500); }
       } catch (caught) { if (active) { setError(caught instanceof PaymentApiError ? caught.message : "Le statut du paiement ne peut pas être vérifié."); setChecking(false); } }

@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 
 import { EmptyNotice, PageHero } from "@/components/marketing";
 import { getPublicContent } from "@/lib/public-content";
+import { publicMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Questions fréquentes", description: "Réponses publiées sur la réservation, la prise en charge et le transport privé." };
+export const metadata: Metadata = publicMetadata("Questions fréquentes", "Réponses publiées sur la réservation, la prise en charge et le transport privé.", "/faq");
 
 export default async function FAQPage() {
   const { faqs } = await getPublicContent();

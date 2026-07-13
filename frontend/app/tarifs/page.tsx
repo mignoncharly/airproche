@@ -4,11 +4,13 @@ import { QuoteEstimator } from "@/components/quote-estimator";
 import { ContactCta, EmptyNotice, PageHero, SectionHeading } from "@/components/marketing";
 import { getLocationsAndCoverage } from "@/lib/locations-pricing";
 import { getPublicContent } from "@/lib/public-content";
+import { publicMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Tarifs et estimation",
-  description: "Obtenez une estimation serveur pour un transfert privé entre un aéroport et une zone active.",
-};
+export const metadata: Metadata = publicMetadata(
+  "Tarifs et estimation",
+  "Obtenez une estimation serveur pour un transfert privé entre un aéroport et une zone active.",
+  "/tarifs",
+);
 
 export default async function PricingPage() {
   const [{ settings }, locationData] = await Promise.all([

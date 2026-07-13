@@ -4,8 +4,9 @@ import { Icon } from "@/components/icon";
 import { ContactCta, PageHero, SectionHeading } from "@/components/marketing";
 import { trustPoints } from "@/lib/marketing-data";
 import { getPublicContent } from "@/lib/public-content";
+import { publicMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "À propos", description: "La vision du service : un accueil privé fiable, humain et clairement organisé." };
+export const metadata: Metadata = publicMetadata("À propos", "La vision du service : un accueil privé fiable, humain et clairement organisé.", "/a-propos");
 
 export default async function AboutPage() {
   const { settings } = await getPublicContent();

@@ -5,11 +5,13 @@ import { Icon } from "@/components/icon";
 import { ContactCta, EmptyNotice, PageHero } from "@/components/marketing";
 import { getLocationsAndCoverage } from "@/lib/locations-pricing";
 import { getPublicContent } from "@/lib/public-content";
+import { publicMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Aéroports desservis",
-  description: "Consultez les aéroports disposant actuellement d’au moins un trajet tarifé.",
-};
+export const metadata: Metadata = publicMetadata(
+  "Aéroports desservis",
+  "Consultez les aéroports disposant actuellement d’au moins un trajet tarifé.",
+  "/aeroports",
+);
 
 export default async function AirportsPage() {
   const [{ settings }, data] = await Promise.all([getPublicContent(), getLocationsAndCoverage()]);

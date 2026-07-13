@@ -7,6 +7,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { Icon } from "@/components/icon";
+import { trackConversion } from "@/lib/analytics";
 import {
   type Airport,
   type CoverageRoute,
@@ -123,6 +124,7 @@ export function QuoteEstimator({
       return;
     }
     try {
+      trackConversion("quote_started", { trip_type: values.trip_type });
       const result = await createQuote({
         trip_type: values.trip_type,
         airport_id: values.airport_id,
@@ -135,6 +137,7 @@ export function QuoteEstimator({
           .filter((option) => option.quantity > 0),
       });
       setQuote(result);
+      trackConversion("quote_created", { trip_type: result.trip_type, currency: result.currency });
     } catch (error) {
       if (error instanceof QuoteApiError) {
         setApiError({ code: error.code, message: error.message });

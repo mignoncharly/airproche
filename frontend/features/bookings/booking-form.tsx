@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { trackConversion } from "@/lib/analytics";
 import { BookingApiError, type Booking, type BookingQuote, createBooking } from "@/lib/booking-api";
 import { formatMoney } from "@/lib/locations-pricing";
 import { CheckoutAction } from "@/features/payments/checkout-action";
@@ -30,6 +31,7 @@ export function BookingForm({ quote }: { quote: BookingQuote }) {
   async function submit() {
     setSubmitting(true); setError(null);
     try {
+      trackConversion("booking_started", { trip_type: quote.trip_type, currency: quote.currency });
       const adultCount = Number(values.adult_count);
       const childCount = Number(values.child_count);
       const result = await createBooking({
@@ -46,6 +48,7 @@ export function BookingForm({ quote }: { quote: BookingQuote }) {
         accept_terms: values.accept_terms, accept_privacy: values.accept_privacy,
       });
       setBooking(result);
+      trackConversion("booking_created", { trip_type: quote.trip_type, currency: result.currency });
     } catch (caught) {
       setError(caught instanceof BookingApiError ? caught.message : "Le service de réservation est momentanément indisponible.");
     } finally { setSubmitting(false); }

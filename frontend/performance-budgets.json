@@ -1,0 +1,8 @@
+{
+  "mobile": {
+    "domContentLoadedMs": 3000,
+    "loadMs": 5000,
+    "javascriptTransferBytes": 650000,
+    "cumulativeLayoutShift": 0.1
+  }
+}
