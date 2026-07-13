@@ -4,11 +4,12 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.bookings.models import Booking
+from apps.operations.permissions import StaffOperationPermission
 
 from .serializers import CheckoutResponseSerializer, PaymentSerializer, RefundRequestSerializer, RefundSerializer
 from .services import (
@@ -45,13 +46,14 @@ class BookingPaymentStatusView(APIView):
             return Response({"detail": "Réservation introuvable."}, status=404)
         payment = payment_for_booking(
             booking, user=request.user if request.user.is_authenticated else None,
-            raw_token=request.headers.get("X-Booking-Token", ""), session_id=request.query_params.get("session_id", ""),
+            raw_token=request.headers.get("X-Booking-Token", ""), session_id=request.headers.get("X-Checkout-Session", ""),
         )
         return Response(PaymentSerializer(payment).data)
 
 
 class PaymentReconcileView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [StaffOperationPermission]
+    required_permission = "payments.change_payment"
     throttle_scope = "payment_staff"
 
     @method_decorator(csrf_protect)
@@ -61,7 +63,8 @@ class PaymentReconcileView(APIView):
 
 
 class PaymentRefundView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [StaffOperationPermission]
+    required_permission = "payments.add_refund"
     throttle_scope = "payment_staff"
 
     @method_decorator(csrf_protect)

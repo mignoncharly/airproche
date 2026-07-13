@@ -4,9 +4,11 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from apps.operations.permissions import StaffOperationPermission
 
 from .models import Booking
 from .serializers import (
@@ -70,7 +72,7 @@ class BookingDetailView(APIView):
         token = request.headers.get("X-Booking-Token", "")
         if not can_access(booking, user=request.user, raw_token=token):
             return Response({"detail": "Réservation introuvable."}, status=404)
-        return Response(BookingSerializer(booking, context={"is_staff": request.user.is_staff}).data)
+        return Response(BookingSerializer(booking, context={"is_staff": request.user.has_perm("bookings.view_booking")}).data)
 
 
 @method_decorator(csrf_protect, name="dispatch")
@@ -96,7 +98,9 @@ class BookingCancelView(APIView):
 
 @method_decorator(csrf_protect, name="dispatch")
 class BookingTransitionView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [StaffOperationPermission]
+    required_permission = "bookings.change_booking"
+    throttle_scope = "operations_mutation"
 
     @extend_schema(request=TransitionSerializer, responses=BookingSerializer)
     def post(self, request, public_id):

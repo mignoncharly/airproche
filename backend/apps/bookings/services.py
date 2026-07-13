@@ -166,9 +166,12 @@ def verify_guest_access(reference: str, raw_token: str):
     return _booking_queryset().get(pk=token.booking_id)
 
 
-def can_access(booking, *, user=None, raw_token="") -> bool:
-    if user and user.is_authenticated and (user.is_staff or booking.customer_id == user.pk):
-        return True
+def can_access(booking, *, user=None, raw_token="", staff_permission="bookings.view_booking") -> bool:
+    if user and user.is_authenticated:
+        if booking.customer_id == user.pk:
+            return True
+        if user.is_staff and user.has_perm(staff_permission):
+            return True
     if not raw_token:
         return False
     try:
@@ -210,7 +213,10 @@ def transition_booking(booking_id, to_status: str, *, actor=None, note="", corre
 @transaction.atomic
 def cancel_booking(booking_id, *, actor=None, raw_token="", reason="", idempotency_key="", correlation_id=""):
     booking = Booking.objects.select_for_update().get(pk=booking_id)
-    if not can_access(booking, user=actor, raw_token=raw_token):
+    if not can_access(
+        booking, user=actor, raw_token=raw_token,
+        staff_permission="bookings.change_booking",
+    ):
         raise PermissionDenied("Vous nâ€™Ãªtes pas autorisÃ© Ã  gÃ©rer cette rÃ©servation.")
     if booking.status not in {Booking.Status.PENDING_PAYMENT, Booking.Status.CONFIRMED, Booking.Status.DRIVER_ASSIGNMENT_PENDING, Booking.Status.DRIVER_ASSIGNED}:
         raise BookingConflict("Cette rÃ©servation ne peut plus Ãªtre annulÃ©e.", code="cancellation_unavailable")

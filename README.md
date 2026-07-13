@@ -112,3 +112,11 @@ are consent-gated, schema allow-listed, and reject personal data before any
 dispatch. A Playwright Pixel 7 profile enforces checked-in navigation, script,
 layout-shift, and overflow budgets. See
 [SEO, analytics, and performance](docs/SEO_ANALYTICS_PERFORMANCE.md).
+
+## Security and privacy
+
+Phase 13 adds centralized Origin and private-cache enforcement, permission-scoped
+staff access, a mandatory production staff network gate, fragment-only bearer
+links, explicit Stripe live-mode confirmation, production CSP, log redaction,
+shared throttling, retention/anonymization commands, and repeatable dependency
+and secret scans. See [security and privacy hardening](docs/SECURITY_PRIVACY.md).

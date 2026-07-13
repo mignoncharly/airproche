@@ -7,6 +7,7 @@ from decimal import Decimal
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.urls import reverse
 from django.utils import timezone
 
@@ -61,9 +62,15 @@ def create_booking(client, quote):
 
 @pytest.mark.django_db
 def test_checkout_is_server_priced_and_retries_reuse_existing_session(client, open_quote, stripe_config, monkeypatch):
+    checkout_request = {}
+
+    def create_session(**kwargs):
+        checkout_request.update(kwargs)
+        return {"id": "cs_fixture", "url": "https://checkout.stripe.com/cs_fixture"}
+
     monkeypatch.setattr(
         "apps.payments.services.create_checkout_session",
-        lambda **kwargs: {"id": "cs_fixture", "url": "https://checkout.stripe.com/cs_fixture"},
+        create_session,
     )
     booking = create_booking(client, open_quote)
     url = reverse("payments:checkout", args=[booking["public_id"]])
@@ -71,6 +78,8 @@ def test_checkout_is_server_priced_and_retries_reuse_existing_session(client, op
     assert first.status_code == 201
     assert first.json()["checkout_url"] == "https://checkout.stripe.com/cs_fixture"
     assert PaymentAttempt.objects.count() == 1
+    assert "/paiement/retour#booking=" in checkout_request["success_url"]
+    assert "?" not in checkout_request["success_url"]
 
     retry = client.post(url, {}, content_type="application/json", HTTP_X_BOOKING_TOKEN=booking["management_token"], HTTP_IDEMPOTENCY_KEY="pay-2")
     assert retry.status_code == 201
@@ -138,6 +147,7 @@ def test_staff_refund_is_idempotent_and_updates_payment(client, open_quote, stri
     payload = json.dumps(event).encode()
     client.post(reverse("payments:stripe-webhook"), payload, content_type="application/json", HTTP_STRIPE_SIGNATURE=sign_event(payload))
     staff = User.objects.create_user(email="finance@example.com", password="Long-unique-passphrase-729!", is_staff=True)
+    staff.user_permissions.add(Permission.objects.get(codename="add_refund"))
     client.force_login(staff)
     url = reverse("payments:refund", args=[Payment.objects.get().public_id])
     first = client.post(url, {"amount": "20.00", "reason": "Test refund"}, content_type="application/json", HTTP_IDEMPOTENCY_KEY="refund-1")

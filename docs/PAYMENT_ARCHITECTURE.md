@@ -13,7 +13,7 @@ The browser never supplies an amount or currency. Checkout is created from the l
 5. `checkout.session.completed` is accepted only when session ID, metadata, amount, currency, environment, and `payment_status=paid` match the local snapshot. Only then is the payment marked succeeded and a `PENDING_PAYMENT` booking moved to `CONFIRMED`.
 6. Duplicate provider event IDs are acknowledged without repeating the state transition. Mismatches are stored as quarantined webhook events and never confirm a booking.
 
-The return page at `/paiement/retour` polls server status. It can show pending, failed, canceled, succeeded, or quarantined outcomes without trusting query-string success claims.
+The return page at `/paiement/retour` captures booking and Checkout session identifiers from the URL fragment, removes the fragment, then polls server status. It can show pending, failed, canceled, succeeded, or quarantined outcomes without treating the redirect as payment proof.
 
 ## Refunds and reconciliation
 
@@ -27,6 +27,6 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_ENVIRONMENT=test
 ```
 
-Use a separate Stripe account/key/webhook endpoint for each environment. Never expose these values with `NEXT_PUBLIC_`, store them in the database, or log raw webhook payloads/secrets. Production requires `sk_live_...`, `STRIPE_ENVIRONMENT=live`, HTTPS, and a real webhook secret.
+Use a separate Stripe account/key/webhook endpoint for each environment. Never expose these values with `NEXT_PUBLIC_`, store them in the database, or log raw webhook payloads/secrets. Production live mode requires `sk_live_...`, `STRIPE_ENVIRONMENT=live`, `STRIPE_LIVE_MODE_CONFIRMED=true` after explicit approval, HTTPS, and a real webhook secret.
 
 The local webhook endpoint can be exercised with the Stripe CLI or signed fixtures in `backend/tests/test_payments.py`. Live-provider smoke testing and production endpoint registration remain release activities for Phase 14–16.

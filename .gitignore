@@ -37,3 +37,15 @@ Thumbs.db
 *.log
 *.pid
 
+
+# Private keys, database exports, backups, and personal uploads
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+*.dump
+*.sql
+backups/
+uploads/
+private-media/

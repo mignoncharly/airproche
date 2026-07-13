@@ -41,8 +41,9 @@ export async function createStripeCheckout(bookingPublicId: string, managementTo
 }
 
 export async function getPaymentStatus(bookingPublicId: string, sessionId: string, managementToken = ""): Promise<Payment> {
-  const headers: HeadersInit = managementToken ? { "X-Booking-Token": managementToken } : {};
-  const response = await fetch(`/api/v1/payments/bookings/${bookingPublicId}/status/?session_id=${encodeURIComponent(sessionId)}`, { credentials: "same-origin", cache: "no-store", headers });
+  const headers: HeadersInit = { "X-Checkout-Session": sessionId };
+  if (managementToken) headers["X-Booking-Token"] = managementToken;
+  const response = await fetch(`/api/v1/payments/bookings//status/`, { credentials: "same-origin", cache: "no-store", headers });
   if (!response.ok) return parseError(response);
   return paymentSchema.parse(await response.json());
 }

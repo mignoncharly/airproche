@@ -101,6 +101,8 @@ def test_registration_snapshots_consents_and_verification_is_single_use():
         "terms-1",
         "privacy-1",
     }
+    assert "/verification-email#token=" in mail.outbox[0].body
+    assert "/verification-email?token=" not in mail.outbox[0].body
     raw_token = re.search(r"token=([^\s]+)", mail.outbox[0].body).group(1)
     stored = AccountToken.objects.get(purpose=AccountToken.Purpose.VERIFY_EMAIL)
     assert raw_token not in stored.token_digest
@@ -160,6 +162,8 @@ def test_password_reset_is_non_enumerating_and_token_is_single_use():
     assert known.status_code == unknown.status_code == 202
     assert known.json() == unknown.json()
     assert len(mail.outbox) == 1
+    assert "/reinitialiser-mot-de-passe#token=" in mail.outbox[0].body
+    assert "/reinitialiser-mot-de-passe?token=" not in mail.outbox[0].body
     raw_token = re.search(r"token=([^\s]+)", mail.outbox[0].body).group(1)
 
     reset = csrf_post(

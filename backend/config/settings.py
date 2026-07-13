@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ipaddress
 import os
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
@@ -36,6 +37,25 @@ if APP_ENV == "production" and (DEBUG or SECRET_KEY.startswith("unsafe-") or len
 
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS", "http://localhost:3000")
+REQUIRE_API_ORIGIN = env_bool("DJANGO_REQUIRE_API_ORIGIN", APP_ENV == "production")
+STAFF_NETWORK_GATE_ENABLED = env_bool("STAFF_NETWORK_GATE_ENABLED", APP_ENV == "production")
+STAFF_ALLOWED_NETWORKS = env_list("STAFF_ALLOWED_NETWORKS")
+TRUSTED_PROXY_NETWORKS = env_list("TRUSTED_PROXY_NETWORKS", "127.0.0.1/32,::1/128")
+
+for value in [*STAFF_ALLOWED_NETWORKS, *TRUSTED_PROXY_NETWORKS]:
+    try:
+        ipaddress.ip_network(value, strict=False)
+    except ValueError as exc:
+        raise ImproperlyConfigured(f"Invalid network in security configuration: {value}") from exc
+if APP_ENV == "production":
+    if not ALLOWED_HOSTS or "*" in ALLOWED_HOSTS:
+        raise ImproperlyConfigured("Production requires explicit DJANGO_ALLOWED_HOSTS.")
+    if not CSRF_TRUSTED_ORIGINS or any(
+        not origin.startswith("https://") or "*" in origin for origin in CSRF_TRUSTED_ORIGINS
+    ):
+        raise ImproperlyConfigured("Production requires explicit HTTPS CSRF trusted origins.")
+    if STAFF_NETWORK_GATE_ENABLED and not STAFF_ALLOWED_NETWORKS:
+        raise ImproperlyConfigured("STAFF_ALLOWED_NETWORKS is required for the production staff gate.")
 
 
 def database_from_url(url: str) -> dict[str, object]:
@@ -94,10 +114,13 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "apps.core.middleware.CorrelationIdMiddleware",
+    "apps.core.middleware.ApiOriginMiddleware",
+    "apps.core.middleware.StaffNetworkGateMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "apps.core.middleware.PrivateResponseCacheMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -148,12 +171,39 @@ CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_NAME = "__Host-airport_csrf" if APP_ENV == "production" else "airport_csrf"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = APP_ENV == "production"
 SECURE_HSTS_SECONDS = 31536000 if APP_ENV == "production" else 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = APP_ENV == "production"
 SECURE_HSTS_PRELOAD = env_bool("DJANGO_HSTS_PRELOAD", False)
+
+try:
+    DRF_NUM_PROXIES = int(os.getenv("DRF_NUM_PROXIES", "1" if APP_ENV == "production" else "0"))
+except ValueError as exc:
+    raise ImproperlyConfigured("DRF_NUM_PROXIES must be a non-negative integer.") from exc
+if DRF_NUM_PROXIES < 0:
+    raise ImproperlyConfigured("DRF_NUM_PROXIES must be a non-negative integer.")
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024
+
+if APP_ENV == "production":
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+            "LOCATION": "airproche_cache",
+            "TIMEOUT": 300,
+            "OPTIONS": {"MAX_ENTRIES": 100000},
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "airproche-development",
+        }
+    }
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -163,6 +213,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "NUM_PROXIES": DRF_NUM_PROXIES,
     "EXCEPTION_HANDLER": "apps.core.exceptions.api_exception_handler",
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.ScopedRateThrottle",

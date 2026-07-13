@@ -6,6 +6,13 @@ import { useEffect, useRef, useState } from "react";
 import { trackConversion } from "@/lib/analytics";
 import { PaymentApiError, type Payment, getPaymentStatus } from "@/lib/payment-api";
 import { formatMoney } from "@/lib/locations-pricing";
+import { useSensitiveFragment } from "@/lib/sensitive-fragment";
+
+export function PaymentReturnFromFragment() {
+  const fragment = useSensitiveFragment();
+  if (fragment === null) return <section className="surface-card p-6 sm:p-8"><p className="text-sm text-slate-600">Vérification du retour sécurisé…</p></section>;
+  return <PaymentReturn bookingId={fragment.get("booking") ?? ""} sessionId={fragment.get("session_id") ?? ""} cancelled={fragment.get("cancelled") === "1"} />;
+}
 
 export function PaymentReturn({ bookingId, sessionId, cancelled }: { bookingId: string; sessionId: string; cancelled: boolean }) {
   const [payment, setPayment] = useState<Payment | null>(null);

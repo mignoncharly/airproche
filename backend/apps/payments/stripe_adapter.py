@@ -23,7 +23,7 @@ class StripeProviderError(Exception):
 def configuration() -> dict[str, str]:
     secret = os.getenv("STRIPE_SECRET_KEY", "").strip()
     webhook = os.getenv("STRIPE_WEBHOOK_SECRET", "").strip()
-    configured_environment = os.getenv("STRIPE_ENVIRONMENT", "live" if os.getenv("APP_ENV") == "production" else "test").strip().lower()
+    configured_environment = os.getenv("STRIPE_ENVIRONMENT", "test").strip().lower()
     if configured_environment not in {"test", "live"}:
         raise StripeConfigurationError("STRIPE_ENVIRONMENT must be test or live.")
     if not secret:
@@ -32,6 +32,13 @@ def configuration() -> dict[str, str]:
         raise StripeConfigurationError("A test Stripe environment requires a test secret key.")
     if configured_environment == "live" and not secret.startswith("sk_live_"):
         raise StripeConfigurationError("A live Stripe environment requires a live secret key.")
+    live_confirmed = os.getenv("STRIPE_LIVE_MODE_CONFIRMED", "").strip().lower() in {
+        "1", "true", "yes", "on"
+    }
+    if configured_environment == "live" and not live_confirmed:
+        raise StripeConfigurationError(
+            "Live Stripe mode requires explicit STRIPE_LIVE_MODE_CONFIRMED=true."
+        )
     return {"secret_key": secret, "webhook_secret": webhook, "environment": configured_environment}
 
 

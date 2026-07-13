@@ -55,7 +55,7 @@ export function BookingForm({ quote }: { quote: BookingQuote }) {
   }
 
   if (booking) {
-    const manageUrl = `/reservation/gerer?reference=${encodeURIComponent(booking.reference)}#token=${encodeURIComponent(booking.management_token ?? "")}`;
+    const manageUrl = `/reservation/gerer#reference=${encodeURIComponent(booking.reference)}&token=${encodeURIComponent(booking.management_token ?? "")}`;
     return <section className="surface-card p-6 sm:p-8" aria-live="polite"><p className="eyebrow">Demande enregistrée</p><h2 className="mt-3 text-3xl font-black text-slate-950">Référence {booking.reference}</h2><p className="mt-4 text-sm leading-6 text-slate-600">Votre réservation est enregistrée et attend la confirmation du paiement. Conservez le lien de gestion sécurisé ci-dessous.</p><CheckoutAction booking={booking} /><Link className="button button-primary mt-7" href={manageUrl}>Gérer ma réservation</Link><p className="mt-4 text-xs text-slate-500">Le lien de gestion est personnel. Ne le partagez pas.</p></section>;
   }
 

@@ -67,7 +67,7 @@ def _payment_payload(payment: Payment) -> dict:
 
 
 def payment_for_booking(booking, *, user=None, raw_token="", session_id="") -> Payment:
-    if not can_access(booking, user=user, raw_token=raw_token):
+    if not can_access(booking, user=user, raw_token=raw_token, staff_permission="payments.view_payment"):
         if session_id:
             payment = Payment.objects.filter(booking=booking, checkout_session_id=session_id).first()
             if payment:
@@ -96,7 +96,7 @@ def create_checkout(booking_public_id, *, user=None, raw_token="", idempotency_k
         booking = Booking.objects.select_for_update().select_related("airport", "service_area").get(public_id=booking_public_id)
     except Booking.DoesNotExist as exc:
         raise NotFound("Réservation introuvable.") from exc
-    if not can_access(booking, user=user, raw_token=raw_token):
+    if not can_access(booking, user=user, raw_token=raw_token, staff_permission="payments.add_payment"):
         raise NotFound("Réservation introuvable.")
     if booking.status != Booking.Status.PENDING_PAYMENT:
         raise PaymentConflict("Cette réservation n’attend pas un paiement en ligne.", code="booking_not_payable")
@@ -121,8 +121,8 @@ def create_checkout(booking_public_id, *, user=None, raw_token="", idempotency_k
     attempt_number = (payment.attempts.order_by("-attempt_number").first().attempt_number if payment.attempts.exists() else 0) + 1
     attempt = PaymentAttempt.objects.create(payment=payment, attempt_number=attempt_number, idempotency_key=idempotency_key, status=PaymentAttempt.Status.CREATED)
     base = settings.APP_BASE_URL.rstrip("/")
-    success_url = f"{base}/paiement/retour?booking={quote(str(booking.public_id))}&session_id={{CHECKOUT_SESSION_ID}}"
-    cancel_url = f"{base}/paiement/retour?booking={quote(str(booking.public_id))}&cancelled=1"
+    success_url = f"{base}/paiement/retour#booking={quote(str(booking.public_id))}&session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{base}/paiement/retour#booking={quote(str(booking.public_id))}&cancelled=1"
     try:
         session = create_checkout_session(
             amount_minor=_minor(payment.amount), currency=payment.currency,

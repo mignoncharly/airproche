@@ -76,7 +76,10 @@ class BookingReceiptView(APIView):
             except Booking.DoesNotExist:
                 return HttpResponse("Not found", status=404, content_type="text/plain")
         token = request.headers.get("X-Booking-Token", "")
-        if not (request.user.is_authenticated and (request.user.is_staff or booking.customer_id == request.user.pk)) and not can_access(booking, raw_token=token):
+        if not can_access(
+            booking, user=request.user, raw_token=token,
+            staff_permission="bookings.view_booking",
+        ):
             return HttpResponse("Not found", status=404, content_type="text/plain")
         payment = getattr(booking, "payment", None)
         payment_status = payment.status if payment else "not_created"

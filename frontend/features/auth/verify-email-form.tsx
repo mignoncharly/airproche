@@ -4,11 +4,15 @@ import { useState } from "react";
 
 import { AuthLink, FormStatus } from "@/components/auth/auth-shell";
 import { verifyEmail } from "@/lib/auth-api";
+import { useSensitiveFragment } from "@/lib/sensitive-fragment";
 
-export function VerifyEmailForm({ token }: { token: string }) {
+export function VerifyEmailForm() {
+  const fragment = useSensitiveFragment();
+  const token = fragment?.get("token") ?? "";
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  if (fragment === null) return <FormStatus type="info">Vérification du lien…</FormStatus>;
   if (!token) return <FormStatus type="error">Ce lien est incomplet. Connectez-vous pour demander un nouveau lien.</FormStatus>;
   const submit = async () => {
     setLoading(true);

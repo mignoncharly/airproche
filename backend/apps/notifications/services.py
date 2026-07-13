@@ -5,6 +5,7 @@ import hmac
 import json
 import logging
 from collections.abc import Callable
+from urllib.parse import quote
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -204,7 +205,7 @@ def send_account_notification(user, raw_token: str, *, purpose: str) -> bool:
     if purpose == "verify_email":
         kind = EmailNotification.Kind.VERIFY_EMAIL
         template_key = "account.verify.fr"
-        link = f"{settings.APP_BASE_URL}/verification-email?token={raw_token}"
+        link = f"{settings.APP_BASE_URL}/verification-email#token={quote(raw_token)}"
         content = (
             "Vérifiez votre adresse e-mail",
             (
@@ -217,7 +218,7 @@ def send_account_notification(user, raw_token: str, *, purpose: str) -> bool:
     elif purpose == "reset_password":
         kind = EmailNotification.Kind.RESET_PASSWORD
         template_key = "account.reset.fr"
-        link = f"{settings.APP_BASE_URL}/reinitialiser-mot-de-passe?token={raw_token}"
+        link = f"{settings.APP_BASE_URL}/reinitialiser-mot-de-passe#token={quote(raw_token)}"
         content = (
             "Réinitialisez votre mot de passe",
             (

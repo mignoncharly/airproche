@@ -173,7 +173,8 @@ def test_quote_is_server_calculated_rounded_and_snapshotted(client, priced_route
 
     assert saved.status_code == 200
     assert saved.json()["total_amount"] == "104.69"
-    assert saved.headers["Cache-Control"] == "no-store"
+    assert "no-store" in saved.headers["Cache-Control"]
+    assert "private" in saved.headers["Cache-Control"]
 
 
 @pytest.mark.django_db
