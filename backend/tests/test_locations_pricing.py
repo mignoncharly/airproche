@@ -85,6 +85,16 @@ def quote_payload(airport, area, **changes):
 def test_published_locations_are_dynamic_and_exclude_inactive(client, priced_route):
     airport, area, _, _ = priced_route
     Airport.objects.create(
+        name="Published without tariff",
+        iata_code="PUB",
+        slug="published-without-tariff",
+        city="Paris",
+        address="Published",
+        latitude=0,
+        longitude=0,
+        display_order=2,
+    )
+    Airport.objects.create(
         name="Hidden airport",
         iata_code="HID",
         slug="hidden-airport",
@@ -107,7 +117,7 @@ def test_published_locations_are_dynamic_and_exclude_inactive(client, priced_rou
         == area_detail.status_code
         == 200
     )
-    assert [item["iata_code"] for item in airports.json()] == ["TST"]
+    assert [item["iata_code"] for item in airports.json()] == ["TST", "PUB"]
     assert detail.json()["description"] == "Accueil privé sur confirmation."
     assert [item["public_id"] for item in areas.json()] == [str(area.public_id)]
     assert area_detail.json()["postal_codes"] == ["75001", "75002"]
@@ -392,7 +402,7 @@ def test_non_staff_user_cannot_use_staff_api_even_with_model_permission(client, 
 
 
 @pytest.mark.django_db
-def test_public_locations_require_a_current_active_tariff(client, priced_route):
+def test_active_airports_publish_without_tariffs_but_service_areas_require_one(client, priced_route):
     airport, area, tariff, _ = priced_route
     uncovered_airport = Airport.objects.create(
         name="Uncovered active airport",
@@ -411,11 +421,14 @@ def test_public_locations_require_a_current_active_tariff(client, priced_route):
 
     airport_list = client.get(reverse("locations:airport-list")).json()
     area_list = client.get(reverse("locations:service-area-list")).json()
-    assert [item["public_id"] for item in airport_list] == [str(airport.public_id)]
+    assert [item["public_id"] for item in airport_list] == [
+        str(airport.public_id),
+        str(uncovered_airport.public_id),
+    ]
     assert [item["public_id"] for item in area_list] == [str(area.public_id)]
     assert (
         client.get(reverse("locations:airport-detail", args=[uncovered_airport.slug])).status_code
-        == 404
+        == 200
     )
     assert (
         client.get(reverse("locations:service-area-detail", args=[uncovered_area.slug])).status_code
@@ -424,5 +437,8 @@ def test_public_locations_require_a_current_active_tariff(client, priced_route):
 
     tariff.is_active = False
     tariff.save(update_fields=("is_active", "updated_at"))
-    assert client.get(reverse("locations:airport-list")).json() == []
+    assert [item["public_id"] for item in client.get(reverse("locations:airport-list")).json()] == [
+        str(airport.public_id),
+        str(uncovered_airport.public_id),
+    ]
     assert client.get(reverse("locations:service-area-list")).json() == []

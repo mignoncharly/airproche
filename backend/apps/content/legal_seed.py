@@ -122,6 +122,60 @@ Un problème concernant le transport doit d'abord être adressé au chauffeur co
     ),
 }
 
+AIRPORTS = [
+    {
+        "iata_code": "CDG",
+        "name": "Aéroport Paris-Charles de Gaulle",
+        "slug": "paris-charles-de-gaulle",
+        "city": "Roissy-en-France",
+        "country_code": "FR",
+        "address": "95700 Roissy-en-France, France",
+        "latitude": "49.009700",
+        "longitude": "2.547900",
+        "timezone": "Europe/Paris",
+        "terminal_guidance": "Vérifiez le terminal indiqué par la compagnie avant de contacter le chauffeur. Le point de rencontre doit être confirmé directement avec lui.",
+        "description": "Trouvez un chauffeur indépendant pour une prise en charge ou un trajet vers Paris-Charles de Gaulle.",
+        "seo_title": "Chauffeurs privés à Paris-CDG | Airproche",
+        "seo_description": "Consultez les chauffeurs indépendants desservant Paris-Charles de Gaulle et convenez directement du prix et du rendez-vous.",
+        "display_order": 1,
+        "is_active": True,
+    },
+    {
+        "iata_code": "ORY",
+        "name": "Aéroport Paris-Orly",
+        "slug": "paris-orly",
+        "city": "Orly",
+        "country_code": "FR",
+        "address": "94390 Orly, France",
+        "latitude": "48.726200",
+        "longitude": "2.365200",
+        "timezone": "Europe/Paris",
+        "terminal_guidance": "Vérifiez le numéro de terminal et confirmez le point de rencontre directement avec le chauffeur avant le trajet.",
+        "description": "Trouvez un chauffeur indépendant pour une prise en charge ou un trajet vers Paris-Orly.",
+        "seo_title": "Chauffeurs privés à Paris-Orly | Airproche",
+        "seo_description": "Consultez les chauffeurs indépendants desservant Paris-Orly et convenez directement du prix et du rendez-vous.",
+        "display_order": 2,
+        "is_active": True,
+    },
+    {
+        "iata_code": "BVA",
+        "name": "Aéroport Paris-Beauvais",
+        "slug": "paris-beauvais",
+        "city": "Tillé",
+        "country_code": "FR",
+        "address": "Aéroport de Beauvais, 60000 Tillé, France",
+        "latitude": "49.454400",
+        "longitude": "2.112800",
+        "timezone": "Europe/Paris",
+        "terminal_guidance": "Confirmez le terminal et le point de rencontre directement avec le chauffeur. Prévoyez un délai adapté à la circulation vers Paris.",
+        "description": "Trouvez un chauffeur indépendant pour une prise en charge ou un trajet vers Paris-Beauvais.",
+        "seo_title": "Chauffeurs privés à Paris-Beauvais | Airproche",
+        "seo_description": "Consultez les chauffeurs indépendants desservant Paris-Beauvais et convenez directement du prix et du rendez-vous.",
+        "display_order": 3,
+        "is_active": True,
+    },
+]
+
 FAQS = [
     ("Airproche est-il le transporteur ?", "Non. Airproche met en relation avec des chauffeurs professionnels indépendants. Le chauffeur choisi est votre interlocuteur pour le contrat et le trajet."),
     ("Ma demande constitue-t-elle une réservation ?", "Non. Elle est non contraignante. Attendez la confirmation écrite du chauffeur concernant sa disponibilité, son prix et ses conditions."),
@@ -157,6 +211,14 @@ def publish(apps, schema_editor):
         })
     for order, (question, answer) in enumerate(FAQS, start=1):
         FAQ.objects.update_or_create(question=question, defaults={"answer": answer, "is_active": True, "display_order": order})
+
+
+def publish_airports(apps):
+    Airport = apps.get_model("locations", "Airport")
+    for airport in AIRPORTS:
+        defaults = airport.copy()
+        iata_code = defaults.pop("iata_code")
+        Airport.objects.update_or_create(iata_code=iata_code, defaults=defaults)
 
 
 def unpublish(apps, schema_editor):

@@ -39,7 +39,7 @@ def published_service_areas():
 
 
 def published_airports():
-    return Airport.objects.filter(is_active=True, tariffs__in=active_tariffs()).distinct()
+    return Airport.objects.filter(is_active=True)
 
 
 class AirportListView(APIView):

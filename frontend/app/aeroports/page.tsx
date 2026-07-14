@@ -9,21 +9,20 @@ import { publicMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = publicMetadata(
   "Aéroports desservis",
-  "Consultez les aéroports disposant actuellement d’au moins un trajet tarifé.",
+  "Consultez les aéroports proposés dans l’annuaire Airproche.",
   "/aeroports",
 );
 
 export default async function AirportsPage() {
   const [{ settings }, data] = await Promise.all([getPublicContent(), getLocationsAndCoverage()]);
-  const coveredIds = new Set(data.coverage.routes.map((route) => route.airport_id));
-  const airports = data.airports.filter((airport) => coveredIds.has(airport.public_id));
+  const airports = data.airports;
 
   return (
     <main>
       <PageHero
         eyebrow="Accueil aéroport"
-        title="Des aéroports publiés depuis la couverture réelle"
-        description="Chaque aéroport affiché dispose d’au moins un trajet actif vers ou depuis une zone desservie."
+        title="Les principaux aéroports de la région parisienne"
+        description="Consultez les informations utiles puis trouvez un chauffeur indépendant qui dessert votre aéroport."
       />
       <section className="site-container py-16 sm:py-24">
         {airports.length ? (
@@ -37,14 +36,14 @@ export default async function AirportsPage() {
                 <h2 className="mt-6 text-xl font-black tracking-tight text-slate-950">{airport.name}</h2>
                 <p className="mt-2 text-sm text-slate-600">{airport.city} · {airport.country_code}</p>
                 <Link href={`/aeroports/${airport.slug}`} className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-blue-700 hover:underline">
-                  Voir les trajets <Icon name="arrow" className="size-4" />
+                  Voir l’aéroport <Icon name="arrow" className="size-4" />
                 </Link>
               </article>
             ))}
           </div>
         ) : (
-          <EmptyNotice title="Couverture en cours de configuration">
-            <p>Aucun aéroport ne dispose encore d’un trajet tarifé actif. Aucune couverture non vérifiée n’est affichée.</p>
+          <EmptyNotice title="Aéroports en cours de publication">
+            <p>Aucun aéroport actif n’est publié actuellement.</p>
           </EmptyNotice>
         )}
       </section>

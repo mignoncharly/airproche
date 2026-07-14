@@ -6,6 +6,7 @@ import { Icon } from "@/components/icon";
 import { ContactCta, EmptyNotice, PageHero, SectionHeading } from "@/components/marketing";
 import { StructuredData } from "@/components/structured-data";
 import { getAirport, getLocationsAndCoverage } from "@/lib/locations-pricing";
+import { getDrivers } from "@/lib/marketplace";
 import { getPublicContent } from "@/lib/public-content";
 import { airportStructuredData, publicMetadata } from "@/lib/seo";
 
@@ -13,8 +14,7 @@ type PageProps = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
   const data = await getLocationsAndCoverage();
-  const covered = new Set(data.coverage.routes.map((route) => route.airport_id));
-  return data.airports.filter((airport) => covered.has(airport.public_id)).map((airport) => ({ slug: airport.slug }));
+  return data.airports.map((airport) => ({ slug: airport.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -26,23 +26,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return publicMetadata(
     airport.seo_title || `Transferts privés — ${airport.name}`,
     airport.seo_description ||
-      `Consultez les zones et trajets tarifés actuellement disponibles pour ${airport.name}.`,
+      `Consultez les informations utiles et trouvez un chauffeur indépendant pour ${airport.name}.`,
     `/aeroports/${airport.slug}`,
   );
 }
 
 export default async function AirportPage({ params }: PageProps) {
   const { slug } = await params;
-  const [airport, data, { settings }] = await Promise.all([
+  const [airport, allDrivers, { settings }] = await Promise.all([
     getAirport(slug),
-    getLocationsAndCoverage(),
+    getDrivers(),
     getPublicContent(),
   ]);
   if (!airport) notFound();
-  const routes = data.coverage.routes.filter((route) => route.airport_id === airport.public_id);
-  if (!routes.length) notFound();
-  const areaIds = new Set(routes.map((route) => route.service_area_id));
-  const areas = data.serviceAreas.filter((area) => areaIds.has(area.public_id));
+  const drivers = allDrivers.filter((driver) =>
+    driver.airports.some((servedAirport) => servedAirport.public_id === airport.public_id),
+  );
 
   return (
     <main>
@@ -50,7 +49,7 @@ export default async function AirportPage({ params }: PageProps) {
       <PageHero
         eyebrow={`${airport.iata_code} · ${airport.city}`}
         title={`Transferts privés pour ${airport.name}`}
-        description={airport.description || "Consultez les zones actuellement couvertes et obtenez une estimation calculée par le serveur."}
+        description={airport.description || "Consultez les informations utiles et trouvez un chauffeur indépendant pour cet aéroport."}
       />
       <section className="site-container py-16 sm:py-24">
         <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
@@ -68,27 +67,20 @@ export default async function AirportPage({ params }: PageProps) {
             ) : null}
           </div>
           <div>
-            <SectionHeading eyebrow="Trajets actifs" title="Zones disponibles" description="Le sens exact disponible est indiqué pour chaque zone et vérifié de nouveau à la date choisie." />
-            {areas.length ? (
+            <SectionHeading eyebrow="Chauffeurs indépendants" title="Profils desservant cet aéroport" description="Chaque chauffeur confirme directement sa disponibilité, son prix, ses conditions et le point de rencontre." />
+            {drivers.length ? (
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                {areas.map((area) => {
-                  const directions = routes.filter((route) => route.service_area_id === area.public_id).map((route) => route.trip_type);
-                  return (
-                    <article key={area.public_id} className="surface-card p-6">
-                      <Icon name="route" className="size-6 text-blue-700" />
-                      <h2 className="mt-4 font-extrabold text-slate-950">{area.name}</h2>
-                      <p className="mt-2 text-xs leading-5 text-slate-500">
-                        {directions.includes("airport_pickup") ? "Aéroport → zone" : ""}
-                        {directions.length === 2 ? " · " : ""}
-                        {directions.includes("airport_dropoff") ? "Zone → aéroport" : ""}
-                      </p>
-                      <Link href={`/zones-desservies/${area.slug}`} className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-blue-700 hover:underline">Détails <Icon name="arrow" className="size-4" /></Link>
-                    </article>
-                  );
-                })}
+                {drivers.map((driver) => (
+                  <article key={driver.public_id} className="surface-card p-6">
+                    <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Profil vérifié</p>
+                    <h2 className="mt-3 text-xl font-black text-slate-950">{driver.display_name}</h2>
+                    <p className="mt-2 text-sm text-slate-600">{driver.business_name || "Chauffeur indépendant"}</p>
+                    <Link href={`/chauffeurs/${driver.public_id}`} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-blue-700 hover:underline">Voir et contacter <Icon name="arrow" className="size-4" /></Link>
+                  </article>
+                ))}
               </div>
-            ) : <EmptyNotice title="Aucune zone publiée"><p>La couverture n’est pas disponible actuellement.</p></EmptyNotice>}
-            <Link href="/tarifs" className="button button-primary mt-8">Obtenir une estimation <Icon name="arrow" className="size-4" /></Link>
+            ) : <EmptyNotice title="Aucun chauffeur publié"><p>Les profils apparaîtront ici après vérification et déclaration de cet aéroport dans leur couverture.</p></EmptyNotice>}
+            <Link href="/chauffeurs" className="button button-primary mt-8">Voir tout l’annuaire <Icon name="arrow" className="size-4" /></Link>
           </div>
         </div>
       </section>

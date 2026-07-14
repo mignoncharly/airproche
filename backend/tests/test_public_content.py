@@ -11,6 +11,7 @@ from apps.content.models import (
     ServiceContent,
 )
 from apps.content.models import Testimonial as CustomerReview
+from apps.locations.models import Airport
 
 
 @pytest.mark.django_db
@@ -100,3 +101,4 @@ def test_marketplace_content_command_is_idempotent():
     assert LegalDocument.objects.filter(is_published=True).count() == 6
     assert LegalDocument.objects.filter(kind="transparency").exists()
     assert FAQ.objects.filter(is_active=True).count() == 8
+    assert list(Airport.objects.values_list("iata_code", flat=True)) == ["CDG", "ORY", "BVA"]
