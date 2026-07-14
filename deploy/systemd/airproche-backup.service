@@ -1,0 +1,17 @@
+[Unit]
+Description=Airproche PostgreSQL backup
+After=postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=oneshot
+User=mignon
+Group=mignon
+EnvironmentFile=/home/mignon/airproche/shared/.env.production
+ExecStart=/home/mignon/airproche/current/scripts/backup-production.sh
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/mignon/airproche/backups
+UMask=0077

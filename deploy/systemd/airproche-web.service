@@ -1,0 +1,26 @@
+[Unit]
+Description=Airproche Next.js Web
+After=network.target airproche-api.service
+Wants=airproche-api.service
+
+[Service]
+Type=simple
+User=mignon
+Group=mignon
+WorkingDirectory=/home/mignon/airproche/current/frontend
+EnvironmentFile=/home/mignon/airproche/shared/.env.web
+Environment=NODE_ENV=production
+Environment=NEXT_TELEMETRY_DISABLED=1
+ExecStart=/usr/bin/npm run start -- --hostname 127.0.0.1 --port 3050
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/mignon/airproche/shared
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

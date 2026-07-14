@@ -5,6 +5,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 scripts/check-repo-safety.sh
 scripts/audit-dependencies.sh
 scripts/test-backend.sh
+scripts/check-deployment-config.sh
 scripts/rehearse-postgres-restore.sh
 npm --prefix frontend run lint
 npm --prefix frontend run typecheck

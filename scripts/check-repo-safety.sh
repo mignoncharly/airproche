@@ -9,7 +9,7 @@ if [[ -n "$bad_names" ]]; then
   exit 1
 fi
 
-secret_matches="$(git grep -nEI '(sk_(live|test)_[A-Za-z0-9]{16,}|whsec_[A-Za-z0-9]{16,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@|EMAIL_HOST_PASSWORD=[^[:space:]]+|DJANGO_SECRET_KEY=[^$<{[:space:]][^[:space:]]{15,})' -- . ':(exclude)scripts/check-repo-safety.sh' ':(exclude)backend/tests/**' ':(exclude).env.example' || true)"
+secret_matches="$(git grep -nEI '(sk_(live|test)_[A-Za-z0-9]{16,}|whsec_[A-Za-z0-9]{16,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@|EMAIL_HOST_PASSWORD=[^[:space:]]+|DJANGO_SECRET_KEY=[^$<{[:space:]][^[:space:]]{15,})' -- . ':(exclude)scripts/check-repo-safety.sh' ':(exclude)backend/tests/**' ':(exclude).env.example' | grep -Ev '[$]database_password@|=(fictional[-_A-Za-z0-9]*)' || true)"
 if [[ -n "$secret_matches" ]]; then
   printf 'Potential tracked credentials:\n%s\n' "$secret_matches" >&2
   exit 1

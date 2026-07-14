@@ -1,0 +1,26 @@
+[Unit]
+Description=Airproche Django API
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=mignon
+Group=mignon
+WorkingDirectory=/home/mignon/airproche/current/backend
+EnvironmentFile=/home/mignon/airproche/shared/.env.production
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/home/mignon/airproche/current/backend/.venv/bin/gunicorn config.wsgi:application --bind 127.0.0.1:8050 --workers 2 --threads 2 --timeout 60 --graceful-timeout 30 --access-logfile - --error-logfile -
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=45
+KillSignal=SIGQUIT
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/mignon/airproche/shared
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

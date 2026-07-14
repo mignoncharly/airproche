@@ -49,3 +49,8 @@ id_rsa*
 backups/
 uploads/
 private-media/
+
+# Production runtime layout (never tracked)
+/releases/
+/current
+/shared/

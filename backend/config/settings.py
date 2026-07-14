@@ -156,7 +156,8 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "/django-static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = Path(os.getenv("DJANGO_STATIC_ROOT", BASE_DIR / "staticfiles"))
+MEDIA_ROOT = Path(os.getenv("DJANGO_MEDIA_ROOT", BASE_DIR / "media"))
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 SESSION_COOKIE_HTTPONLY = True
@@ -254,8 +255,14 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 if APP_ENV == "production" and EMAIL_BACKEND.endswith("console.EmailBackend"):
     raise ImproperlyConfigured("The console email backend is forbidden in production.")
-if APP_ENV == "production" and DEFAULT_FROM_EMAIL.endswith("@example.invalid"):
-    raise ImproperlyConfigured("DEFAULT_FROM_EMAIL must be configured in production.")
+if APP_ENV == "production" and (
+    not DEFAULT_FROM_EMAIL
+    or DEFAULT_FROM_EMAIL.endswith("@example.invalid")
+    or not EMAIL_HOST
+    or not EMAIL_HOST_USER
+    or not EMAIL_HOST_PASSWORD
+):
+    raise ImproperlyConfigured("Complete SMTP configuration is required in production.")
 
 LOG_LEVEL = os.getenv("DJANGO_LOG_LEVEL", "INFO").upper()
 LOGGING = {

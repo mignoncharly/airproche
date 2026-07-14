@@ -1,0 +1,13 @@
+[Unit]
+Description=Renew only the Airproche TLS certificate
+After=network-online.target nginx.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/certbot renew --cert-name airproche.docufisc.de --config-dir /etc/letsencrypt-airproche --work-dir /var/lib/letsencrypt-airproche --logs-dir /var/log/letsencrypt-airproche --quiet --deploy-hook /home/mignon/airproche/current/scripts/airproche-cert-deploy-hook.sh
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/etc/letsencrypt-airproche /var/lib/letsencrypt-airproche /var/log/letsencrypt-airproche /var/www/airproche-certbot

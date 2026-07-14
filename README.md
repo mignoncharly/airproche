@@ -127,3 +127,13 @@ Run `scripts/release-qualification.sh` from a clean commit for backend checks,
 all tests, frontend production/browser checks, dependency audits, and repository
 safety scans. The dedicated PostgreSQL backup/restore rehearsal is required
 before production deployment. See [release qualification](docs/RELEASE_QUALIFICATION.md).
+
+## Production deployment
+
+The isolated Ubuntu deployment is operator-driven and does not use Docker.
+Start with [the deployment runbook](docs/DEPLOYMENT.md) and
+[backup/restore runbook](docs/BACKUP_AND_RESTORE.md). The scripts generate
+Airproche-only secrets/resources, deploy immutable Git SHA releases, use
+app-specific systemd/Nginx/certificate files, keep Stripe in test mode, and do
+not provision Redis or PayPal. Production has not been deployed until the
+runbook's operator and post-deployment checks pass.
