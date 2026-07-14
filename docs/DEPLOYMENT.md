@@ -77,12 +77,12 @@ sudo scripts/enable-production-tls.sh YOUR_CERTBOT_CONTACT_EMAIL
 ### Bootstrap guarantees
 
 `bootstrap-production.sh` generates independent Django, PostgreSQL, and backup
-encryption secrets with OpenSSL and stores them without printing. It creates or
-updates only the fixed PostgreSQL role `airproche`, creates only database
-`airproche`, installs only `airproche-*` units, and installs an HTTP-only
-Airproche ACME block after `nginx -t`. It refuses an existing environment file,
-foreign database owner, dirty repository identity, missing prerequisites, or
-occupied Airproche ports. It does not start the application.
+encryption secrets with OpenSSL and stores them without printing. It creates
+only the fixed PostgreSQL role and database named `airproche`, and refuses to
+reuse either name if it already exists. It installs only `airproche-*` units
+and an HTTP-only Airproche ACME block after `nginx -t`. It also refuses an
+existing environment file, dirty repository identity, missing prerequisites,
+or occupied Airproche ports. It does not start the application.
 
 ### Interactive provider configuration
 
