@@ -1,4 +1,5 @@
 from django.apps import apps
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 
 from apps.content.legal_seed import publish, publish_airports
@@ -10,4 +11,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         publish(apps, None)
         publish_airports(apps)
+        cache.clear()
         self.stdout.write(self.style.SUCCESS("Airproche marketplace content and airports published."))
