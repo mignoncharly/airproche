@@ -11,6 +11,7 @@ const legalLinks = [
   { href: "/annulation", label: "Annulation" },
   { href: "/mentions-legales", label: "Mentions légales" },
   { href: "/cookies", label: "Cookies" },
+  { href: "/transparence", label: "Transparence" },
 ] as const;
 
 export function SiteFooter({ settings }: { settings: BusinessSettings }) {

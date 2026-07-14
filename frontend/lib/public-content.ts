@@ -41,7 +41,7 @@ const testimonialSchema = z.object({
 });
 
 const legalDocumentSchema = z.object({
-  kind: z.enum(["privacy", "terms", "cancellation", "legal_notice", "cookies"]),
+  kind: z.enum(["privacy", "terms", "cancellation", "legal_notice", "cookies", "transparency"]),
   version: z.string(),
   title: z.string(),
   body: z.string(),

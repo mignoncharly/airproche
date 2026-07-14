@@ -44,7 +44,8 @@ export function buildSitemap(
   content: PublicContent,
   data: LocationData,
 ): MetadataRoute.Sitemap {
-  const paths = ["/", "/fonctionnement", "/a-propos"];
+  const paths = ["/", "/chauffeurs", "/fonctionnement", "/a-propos"];
+  if (content.legal_documents.some((document) => document.kind === "transparency")) paths.push("/transparence");
   if (data.coverage.routes.length) {
     paths.push("/aeroports", "/zones-desservies", "/tarifs");
   }
@@ -79,7 +80,7 @@ export function businessStructuredData(
 
   const data: Record<string, unknown> = {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
+    "@type": "Organization",
     "@id": absoluteUrl("/#business"),
     name: settings.business_name,
     url: absoluteUrl("/"),

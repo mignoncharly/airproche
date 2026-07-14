@@ -7,6 +7,7 @@ const fallbackTitles: Record<LegalDocumentKind, string> = {
   cancellation: "Politique d’annulation",
   legal_notice: "Mentions légales",
   cookies: "Politique relative aux cookies",
+  transparency: "Transparence de la plateforme",
 };
 
 export async function LegalPage({ kind }: { kind: LegalDocumentKind }) {

@@ -119,6 +119,7 @@ class LegalDocument(TimeStampedPublicModel):
         CANCELLATION = "cancellation", "Cancellation policy"
         LEGAL_NOTICE = "legal_notice", "Legal notice"
         COOKIES = "cookies", "Cookie policy"
+        TRANSPARENCY = "transparency", "Platform transparency"
 
     kind = models.CharField(max_length=24, choices=Kind.choices)
     version = models.CharField(max_length=32)

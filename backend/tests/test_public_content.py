@@ -1,5 +1,6 @@
 import pytest
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.urls import reverse
 from django.utils import timezone
 
@@ -85,3 +86,17 @@ def test_active_testimonial_requires_verification():
 
     with pytest.raises(ValidationError):
         testimonial.full_clean()
+
+
+@pytest.mark.django_db
+def test_marketplace_content_command_is_idempotent():
+    call_command("publish_marketplace_content")
+    call_command("publish_marketplace_content")
+
+    settings = BusinessSettings.objects.get(pk=1)
+    assert settings.business_name == "Airproche"
+    assert settings.email == "info@gestionatech.de"
+    assert settings.booking_enabled is False
+    assert LegalDocument.objects.filter(is_published=True).count() == 6
+    assert LegalDocument.objects.filter(kind="transparency").exists()
+    assert FAQ.objects.filter(is_active=True).count() == 8

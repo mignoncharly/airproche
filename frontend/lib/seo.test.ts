@@ -83,7 +83,7 @@ describe("SEO publication", () => {
   it("emits managed services in escaped structured data only with a published identity", () => {
     process.env.APP_BASE_URL = "https://app.example.test";
     const data = businessStructuredData(content.settings, content.services);
-    expect(data).toMatchObject({ "@type": "LocalBusiness" });
+    expect(data).toMatchObject({ "@type": "Organization" });
     expect(JSON.stringify(data)).toContain("Accueil fictif");
     expect(
       businessStructuredData({ ...content.settings, phone: "", email: "", address: "" }, []),

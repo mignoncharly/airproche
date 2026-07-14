@@ -133,6 +133,7 @@ run_backend check --deploy
 run_backend migrate --plan
 runuser -u "$APP_USER" --preserve-environment -- env HOME=/home/mignon "$release/scripts/backup-production.sh"
 run_backend migrate --noinput
+run_backend publish_marketplace_content
 run_backend createcachetable
 run_backend collectstatic --noinput
 
