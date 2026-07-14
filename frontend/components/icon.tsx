@@ -5,6 +5,7 @@ type IconName =
   | "car"
   | "check"
   | "clock"
+  | "close"
   | "download"
   | "home"
   | "hotel"
@@ -24,6 +25,7 @@ const paths: Record<IconName, React.ReactNode> = {
   car: <><path d="M5 17h14l-1.4-6.2A2.3 2.3 0 0 0 15.4 9H8.6a2.3 2.3 0 0 0-2.2 1.8L5 17Z" /><path d="M7 17v2m10-2v2M7.5 13h9" /></>,
   check: <path d="m5 12 4 4L19 6" />,
   clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+  close: <path d="M6 6l12 12M18 6 6 18" />,
   download: <><path d="M12 3v12m-5-5 5 5 5-5" /><path d="M5 21h14" /></>,
   home: <><path d="m3 11 9-7 9 7" /><path d="M5 10v10h14V10M9 20v-6h6v6" /></>,
   hotel: <><path d="M4 20V5h12v15M8 9h4m-4 4h4m-4 4h4m4-7h4v10" /></>,

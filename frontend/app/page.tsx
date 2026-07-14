@@ -43,7 +43,7 @@ export default async function HomePage() {
           <div className="relative mx-auto w-full max-w-[34rem]">
             <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-[#10213f] shadow-2xl">
               <Image src="/images/airport-transfer-hero.png" alt="Un chauffeur range les bagages d’une passagère dans un véhicule privé devant un aéroport" fill priority sizes="(min-width: 1024px) 46vw, 90vw" className="object-cover object-center" />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-transparent p-7 pt-24 text-white sm:p-9 sm:pt-28">
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-transparent p-7 pb-24 pt-20 text-white sm:p-9 sm:pb-32 sm:pt-28">
                 <p className="text-sm font-semibold text-blue-200">Aéroport → destination</p>
                 <p className="mt-2 max-w-md text-2xl font-bold tracking-tight">Un point de rencontre clair, un trajet préparé.</p>
               </div>

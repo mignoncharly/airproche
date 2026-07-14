@@ -9,6 +9,8 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 }
 
+const PWA_NOTICE_DISMISSED_KEY = "airproche_pwa_notice_dismissed";
+
 function isIosDevice() {
   const userAgent = window.navigator.userAgent;
   const platform = window.navigator.platform;
@@ -27,9 +29,11 @@ export function PwaManager() {
   const [showIosHelp, setShowIosHelp] = useState(false);
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
   const refreshRequested = useRef(false);
+  const [noticeDismissed, setNoticeDismissed] = useState(false);
 
   useEffect(() => {
-    const iosDetectionTimer = window.setTimeout(() => {
+    const browserStateTimer = window.setTimeout(() => {
+      setNoticeDismissed(window.sessionStorage.getItem(PWA_NOTICE_DISMISSED_KEY) === "true");
       setIosInstallAvailable(isIosDevice() && !isStandalone());
     }, 0);
 
@@ -41,7 +45,7 @@ export function PwaManager() {
 
     if (!("serviceWorker" in navigator)) {
       return () => {
-        window.clearTimeout(iosDetectionTimer);
+        window.clearTimeout(browserStateTimer);
         window.removeEventListener("beforeinstallprompt", captureInstall);
       };
     }
@@ -69,7 +73,7 @@ export function PwaManager() {
 
     return () => {
       active = false;
-      window.clearTimeout(iosDetectionTimer);
+      window.clearTimeout(browserStateTimer);
       window.removeEventListener("beforeinstallprompt", captureInstall);
       navigator.serviceWorker.removeEventListener("controllerchange", reloadAfterUpdate);
     };
@@ -88,31 +92,42 @@ export function PwaManager() {
     waitingWorker.postMessage({ type: "SKIP_WAITING" });
   }
 
-  if (!installPrompt && !iosInstallAvailable && !waitingWorker) return null;
+  function dismissNotice() {
+    window.sessionStorage.setItem(PWA_NOTICE_DISMISSED_KEY, "true");
+    setNoticeDismissed(true);
+    setShowIosHelp(false);
+  }
+
+  if (noticeDismissed || (!installPrompt && !iosInstallAvailable && !waitingWorker)) return null;
 
   return (
     <aside className="pointer-events-auto w-full max-w-xl rounded-2xl border border-slate-300 bg-white p-4 shadow-xl" aria-label="Installation de l’application">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-bold text-slate-950">
-          {waitingWorker ? "Une mise à jour est prête." : "Installer Airproche sur cet appareil."}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {waitingWorker ? (
-            <button className="button button-primary" type="button" onClick={applyUpdate}>
-              <Icon name="refresh" className="size-4" /> Mettre à jour
-            </button>
-          ) : null}
-          {installPrompt ? (
-            <button className="button button-primary" type="button" onClick={() => void install()}>
-              <Icon name="download" className="size-4" /> Installer
-            </button>
-          ) : null}
-          {iosInstallAvailable ? (
-            <button className="button button-secondary" type="button" onClick={() => setShowIosHelp((current) => !current)} aria-expanded={showIosHelp}>
-              <Icon name="share" className="size-4" /> Installation iPhone/iPad
-            </button>
-          ) : null}
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between sm:gap-3">
+          <p className="text-sm font-bold text-slate-950">
+            {waitingWorker ? "Une mise à jour est prête." : "Installer Airproche sur cet appareil."}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2 sm:mt-0">
+            {waitingWorker ? (
+              <button className="button button-primary" type="button" onClick={applyUpdate}>
+                <Icon name="refresh" className="size-4" /> Mettre à jour
+              </button>
+            ) : null}
+            {installPrompt ? (
+              <button className="button button-primary" type="button" onClick={() => void install()}>
+                <Icon name="download" className="size-4" /> Installer
+              </button>
+            ) : null}
+            {iosInstallAvailable ? (
+              <button className="button button-secondary" type="button" onClick={() => setShowIosHelp((current) => !current)} aria-expanded={showIosHelp}>
+                <Icon name="share" className="size-4" /> Installation iPhone/iPad
+              </button>
+            ) : null}
+          </div>
         </div>
+        <button className="grid size-10 shrink-0 place-items-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950" type="button" onClick={dismissNotice} aria-label="Fermer la proposition d’installation">
+          <Icon name="close" className="size-5" />
+        </button>
       </div>
       {showIosHelp ? (
         <p className="mt-3 border-t border-slate-200 pt-3 text-sm leading-6 text-slate-700">

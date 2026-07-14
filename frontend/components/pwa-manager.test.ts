@@ -26,6 +26,13 @@ describe("PWA install and update UI", () => {
     expect(source).not.toContain("registration.skipWaiting");
   });
 
+  it("offers an accessible session-scoped dismissal", () => {
+    expect(source).toContain("window.sessionStorage.setItem(PWA_NOTICE_DISMISSED_KEY");
+    expect(source).toContain("noticeDismissed ||");
+    expect(source).toContain('aria-label="Fermer la proposition d’installation"');
+    expect(source).toContain('<Icon name="close"');
+  });
+
   it("shares a bounded responsive notice stack without covering consent controls", () => {
     expect(layoutSource).toContain("fixed inset-x-3 bottom-3");
     expect(layoutSource).toContain("flex flex-col items-end gap-3");
