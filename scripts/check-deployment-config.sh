@@ -26,6 +26,9 @@ grep -q 'NGINX_GROUP=www-data' scripts/bootstrap-production.sh
 grep -q 'NGINX_GROUP=www-data' scripts/deploy-production.sh
 grep -q 'install -d -m 0710 -o "$APP_USER" -g "$NGINX_GROUP" "$SHARED"' scripts/deploy-production.sh
 grep -q 'install -d -m 0750 -o "$APP_USER" -g "$NGINX_GROUP" "$SHARED/static"' scripts/deploy-production.sh
+grep -q 'DJANGO_ALLOWED_HOSTS=airproche.docufisc.de,www.airproche.docufisc.de,127.0.0.1' scripts/bootstrap-production.sh
+grep -q 'ReadWritePaths=/home/mignon/airproche/shared /home/mignon/airproche/current/frontend/.next/server/app' deploy/systemd/airproche-web.service
+grep -q 'systemctl restart airproche-api.service' scripts/deploy-production.sh
 grep -q 'certbot certonly' scripts/enable-production-tls.sh
 grep -q -- '--config-dir /etc/letsencrypt-airproche' scripts/enable-production-tls.sh
 if grep -REq '/etc/letsencrypt/live/' deploy scripts/enable-production-tls.sh scripts/airproche-cert-deploy-hook.sh; then
@@ -72,7 +75,7 @@ APP_ENV=production \
 APP_BASE_URL=https://airproche.docufisc.de \
 DJANGO_SECRET_KEY=fictional-deploy-check-secret-abcdefghijklmnopqrstuvwxyz-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ \
 DJANGO_DEBUG=false \
-DJANGO_ALLOWED_HOSTS=airproche.docufisc.de,www.airproche.docufisc.de \
+DJANGO_ALLOWED_HOSTS=airproche.docufisc.de,www.airproche.docufisc.de,127.0.0.1 \
 DJANGO_CSRF_TRUSTED_ORIGINS=https://airproche.docufisc.de,https://www.airproche.docufisc.de \
 DJANGO_REQUIRE_API_ORIGIN=true \
 STAFF_NETWORK_GATE_ENABLED=true \

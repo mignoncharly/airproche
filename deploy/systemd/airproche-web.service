@@ -19,7 +19,9 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/home/mignon/airproche/shared
+# Next.js ISR updates prerendered public pages after their revalidation window.
+# Keep the release read-only except for that generated cache and shared state.
+ReadWritePaths=/home/mignon/airproche/shared /home/mignon/airproche/current/frontend/.next/server/app
 UMask=0027
 
 [Install]

@@ -30,6 +30,15 @@ if [[ -n "$(git -C "$APP_ROOT" status --porcelain)" ]]; then
   exit 1
 fi
 
+# Server-rendered frontend requests use the dedicated loopback API listener.
+# Upgrade installations bootstrapped before loopback was included in Django's
+# host allowlist without exposing or replacing any secret values.
+allowed_hosts="$(sed -n 's/^DJANGO_ALLOWED_HOSTS=//p' "$ENV_FILE")"
+case ",$allowed_hosts," in
+  *,127.0.0.1,*) ;;
+  *) sed -i "s|^DJANGO_ALLOWED_HOSTS=.*|DJANGO_ALLOWED_HOSTS=${allowed_hosts},127.0.0.1|" "$ENV_FILE" ;;
+esac
+
 set -a
 # shellcheck disable=SC1090
 source "$ENV_FILE"
@@ -121,6 +130,13 @@ rollback_application() {
 }
 trap rollback_application ERR
 
+# Existing installations must reload the loopback host allowlist before the
+# frontend build. A first deployment has no active API yet; ISR fills its
+# public pages after activation.
+if [[ -n "$previous" ]]; then
+  systemctl restart airproche-api.service
+fi
+
 runuser -u "$APP_USER" -- python3 -m venv "$release/backend/.venv"
 runuser -u "$APP_USER" -- "$release/backend/.venv/bin/pip" install --disable-pip-version-check --no-deps -r "$release/backend/requirements/prod-lock.txt"
 runuser -u "$APP_USER" -- env -i HOME=/home/mignon PATH=/usr/local/bin:/usr/bin:/bin NEXT_TELEMETRY_DISABLED=1 nice -n 10 npm --prefix "$release/frontend" ci --no-audit --no-fund
@@ -150,6 +166,10 @@ fi
 ln -s "$SHARED/next-cache" "$release/frontend/.next/cache"
 runuser -u "$APP_USER" -- env -i HOME=/home/mignon PATH=/usr/local/bin:/usr/bin:/bin \
   npm --prefix "$release/frontend" prune --omit=dev --no-audit --no-fund
+
+install -m 0644 "$release/deploy/systemd/airproche-api.service" /etc/systemd/system/airproche-api.service
+install -m 0644 "$release/deploy/systemd/airproche-web.service" /etc/systemd/system/airproche-web.service
+systemctl daemon-reload
 
 ln -sfn "$release" "$APP_ROOT/.current-$sha"
 mv -Tf "$APP_ROOT/.current-$sha" "$APP_ROOT/current"
