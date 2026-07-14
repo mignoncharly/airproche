@@ -4,7 +4,7 @@ const airportSchema = z.object({ public_id: z.string().uuid(), name: z.string(),
 const areaSchema = z.object({ public_id: z.string().uuid(), name: z.string(), slug: z.string(), area_type: z.string(), country_code: z.string(), region: z.string(), city: z.string(), description: z.string() });
 export const driverSchema = z.object({
   public_id: z.string().uuid(), display_name: z.string(), business_name: z.string(), bio: z.string(),
-  max_passengers: z.number(), airports: z.array(airportSchema), service_areas: z.array(areaSchema), accepts_quote_requests: z.boolean(),
+  max_passengers: z.number(), accepted_payment_methods: z.array(z.enum(["cash", "card_terminal", "bank_transfer", "private_payment_link"])), airports: z.array(airportSchema), service_areas: z.array(areaSchema), accepts_quote_requests: z.boolean(),
 });
 export type MarketplaceDriver = z.infer<typeof driverSchema>;
 

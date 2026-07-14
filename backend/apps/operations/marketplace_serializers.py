@@ -6,22 +6,26 @@ from apps.locations.serializers import AirportListSerializer, ServiceAreaListSer
 from .models import DriverInquiry, MarketplaceDriverProfile
 
 
+PAYMENT_METHODS = ("cash", "card_terminal", "bank_transfer", "private_payment_link")
+
+
 class DriverDirectorySerializer(serializers.ModelSerializer):
     airports = AirportListSerializer(many=True, read_only=True)
     service_areas = ServiceAreaListSerializer(many=True, read_only=True)
 
     class Meta:
         model = MarketplaceDriverProfile
-        fields = ("public_id", "display_name", "business_name", "bio", "max_passengers", "airports", "service_areas", "accepts_quote_requests")
+        fields = ("public_id", "display_name", "business_name", "bio", "max_passengers", "accepted_payment_methods", "airports", "service_areas", "accepts_quote_requests")
 
 
 class DriverProfileSerializer(serializers.ModelSerializer):
+    accepted_payment_methods = serializers.ListField(child=serializers.ChoiceField(choices=PAYMENT_METHODS), required=False, allow_empty=True)
     airport_ids = serializers.SlugRelatedField(source="airports", slug_field="public_id", queryset=Airport.objects.filter(is_active=True), many=True, required=False)
     service_area_ids = serializers.SlugRelatedField(source="service_areas", slug_field="public_id", queryset=ServiceArea.objects.filter(is_active=True), many=True, required=False)
 
     class Meta:
         model = MarketplaceDriverProfile
-        fields = ("public_id", "display_name", "business_name", "business_identifier", "vtc_card_number", "insurance_provider", "bio", "phone", "max_passengers", "airport_ids", "service_area_ids", "verification_status", "is_published", "accepts_quote_requests")
+        fields = ("public_id", "display_name", "business_name", "business_identifier", "vtc_card_number", "insurance_provider", "bio", "phone", "max_passengers", "accepted_payment_methods", "airport_ids", "service_area_ids", "verification_status", "is_published", "accepts_quote_requests")
         read_only_fields = ("public_id", "verification_status", "is_published")
 
 

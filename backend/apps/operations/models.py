@@ -52,6 +52,7 @@ class MarketplaceDriverProfile(models.Model):
     insurance_provider = models.CharField(max_length=180, blank=True)
     bio = models.TextField(blank=True, max_length=2000)
     phone = models.CharField(max_length=32)
+    accepted_payment_methods = models.JSONField(default=list, blank=True)
     max_passengers = models.PositiveSmallIntegerField(default=4, validators=(MinValueValidator(1),))
     service_areas = models.ManyToManyField(ServiceArea, blank=True, related_name="marketplace_drivers")
     airports = models.ManyToManyField(Airport, blank=True, related_name="marketplace_drivers")

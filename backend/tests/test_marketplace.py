@@ -11,7 +11,7 @@ def marketplace_driver(db):
     user = User.objects.create_user(email="driver@example.com", password="Long-unique-passphrase-729!", first_name="Marie", last_name="VTC", phone="+33600000000")
     airport = Airport.objects.create(name="Paris CDG", iata_code="CDG", slug="cdg", city="Paris", address="Test", latitude=48, longitude=2)
     area = ServiceArea.objects.create(name="Paris", slug="paris", area_type="city", city="Paris")
-    profile = MarketplaceDriverProfile.objects.create(user=user, display_name="Marie VTC", phone=user.phone, verification_status="verified", is_published=True)
+    profile = MarketplaceDriverProfile.objects.create(user=user, display_name="Marie VTC", phone=user.phone, accepted_payment_methods=["cash", "card_terminal"], verification_status="verified", is_published=True)
     profile.airports.add(airport)
     profile.service_areas.add(area)
     return profile, airport
@@ -23,6 +23,7 @@ def test_directory_only_exposes_verified_published_profiles(client, marketplace_
     response = client.get(reverse("marketplace:driver-list"))
     assert response.status_code == 200
     assert response.json()[0]["public_id"] == str(profile.public_id)
+    assert response.json()[0]["accepted_payment_methods"] == ["cash", "card_terminal"]
     profile.verification_status = "pending"
     profile.save(update_fields=("verification_status",))
     assert client.get(reverse("marketplace:driver-list")).json() == []
