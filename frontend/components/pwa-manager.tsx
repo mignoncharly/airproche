@@ -9,7 +9,6 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 }
 
-const PWA_NOTICE_DISMISSED_KEY = "airproche_pwa_notice_dismissed";
 
 function isIosDevice() {
   const userAgent = window.navigator.userAgent;
@@ -33,7 +32,6 @@ export function PwaManager() {
 
   useEffect(() => {
     const browserStateTimer = window.setTimeout(() => {
-      setNoticeDismissed(window.sessionStorage.getItem(PWA_NOTICE_DISMISSED_KEY) === "true");
       setIosInstallAvailable(isIosDevice() && !isStandalone());
     }, 0);
 
@@ -93,7 +91,6 @@ export function PwaManager() {
   }
 
   function dismissNotice() {
-    window.sessionStorage.setItem(PWA_NOTICE_DISMISSED_KEY, "true");
     setNoticeDismissed(true);
     setShowIosHelp(false);
   }

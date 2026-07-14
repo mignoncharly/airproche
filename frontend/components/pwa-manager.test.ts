@@ -26,8 +26,9 @@ describe("PWA install and update UI", () => {
     expect(source).not.toContain("registration.skipWaiting");
   });
 
-  it("offers an accessible session-scoped dismissal", () => {
-    expect(source).toContain("window.sessionStorage.setItem(PWA_NOTICE_DISMISSED_KEY");
+  it("offers an accessible page-instance dismissal that resets after refresh", () => {
+    expect(source).not.toContain("sessionStorage");
+    expect(source).toContain("setNoticeDismissed(true)");
     expect(source).toContain("noticeDismissed ||");
     expect(source).toContain('aria-label="Fermer la proposition d’installation"');
     expect(source).toContain('<Icon name="close"');
