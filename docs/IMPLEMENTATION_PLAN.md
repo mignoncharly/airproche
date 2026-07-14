@@ -575,7 +575,7 @@ Each phase ends with updated documentation and demonstrable acceptance criteria.
 - **Files/modules:** backend tests, frontend tests, `e2e/`, fixtures/factories, CI matrices and runbooks.
 - **Database/API/frontend:** Test fixtures only; production-like staging migrations and data seed procedure with fictional, labelled data.
 - **Security:** Test logs/screenshots/traces redact secrets and personal data; test credentials cannot target live mode.
-- **Tests:** Guest/customer booking, Stripe, practical PayPal sandbox, admin confirm/assign, cancellation/refund, mobile, email failure, webhook races, backup restore, accessibility.
+- **Tests:** Guest/customer booking, Stripe retries and ordering, admin confirm/assign, cancellation/refund, mobile, email failure, webhook races, backup restore, accessibility.
 - **Acceptance:** All critical journeys pass in staging; no flaky release-blocking tests; unresolved defects are triaged and no incomplete feature is presented as done.
 - **Dependencies:** Phases 1–13.
 

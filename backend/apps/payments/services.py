@@ -6,7 +6,7 @@ from urllib.parse import quote
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
-from rest_framework.exceptions import APIException, NotFound, PermissionDenied
+from rest_framework.exceptions import APIException, NotFound
 
 from apps.bookings.models import Booking, BookingStatusHistory
 from apps.bookings.services import can_access
@@ -191,8 +191,14 @@ def apply_checkout_session(session: dict) -> tuple[Payment, str]:
         payment.status = Payment.Status.PENDING
         payment.save(update_fields=("status", "updated_at"))
         return payment, "pending"
-    if payment.status == Payment.Status.SUCCEEDED:
+    if payment.status in {
+        Payment.Status.SUCCEEDED,
+        Payment.Status.PARTIALLY_REFUNDED,
+        Payment.Status.REFUNDED,
+    }:
         return payment, "duplicate"
+    if payment.status == Payment.Status.MISMATCHED:
+        raise PaymentMismatch("Un paiement isolé nécessite une réconciliation opérateur.")
     now = timezone.now()
     payment.status = Payment.Status.SUCCEEDED
     payment.payment_intent_id = session.get("payment_intent") or payment.payment_intent_id
@@ -235,19 +241,43 @@ def process_stripe_event(event: dict) -> str:
             webhook.status = WebhookEvent.Status.QUARANTINED if outcome == "paid_cancelled_booking" else WebhookEvent.Status.PROCESSED
         elif event["type"] == "checkout.session.expired":
             payment = _find_payment_for_event(obj)
-            payment.status = Payment.Status.CANCELED
-            payment.save(update_fields=("status", "updated_at"))
-            payment.attempts.filter(checkout_session_id=obj.get("id"), status=PaymentAttempt.Status.PENDING).update(status=PaymentAttempt.Status.CANCELED, updated_at=timezone.now())
             webhook.payment = payment
-            webhook.status = WebhookEvent.Status.PROCESSED
+            if payment.status in {
+                Payment.Status.SUCCEEDED,
+                Payment.Status.PARTIALLY_REFUNDED,
+                Payment.Status.REFUNDED,
+                Payment.Status.MISMATCHED,
+            }:
+                webhook.status = WebhookEvent.Status.IGNORED
+            else:
+                payment.status = Payment.Status.CANCELED
+                payment.save(update_fields=("status", "updated_at"))
+                payment.attempts.filter(
+                    checkout_session_id=obj.get("id"),
+                    status=PaymentAttempt.Status.PENDING,
+                ).update(status=PaymentAttempt.Status.CANCELED, updated_at=timezone.now())
+                webhook.status = WebhookEvent.Status.PROCESSED
         elif event["type"] == "payment_intent.payment_failed":
             payment = _find_payment_for_event(obj)
-            payment.status = Payment.Status.FAILED
-            payment.last_error_code = (obj.get("last_payment_error") or {}).get("code", "payment_failed")
-            payment.last_error_message = ((obj.get("last_payment_error") or {}).get("message") or "Le paiement Stripe a échoué.")[:300]
-            payment.save(update_fields=("status", "last_error_code", "last_error_message", "updated_at"))
             webhook.payment = payment
-            webhook.status = WebhookEvent.Status.PROCESSED
+            if payment.status in {
+                Payment.Status.SUCCEEDED,
+                Payment.Status.PARTIALLY_REFUNDED,
+                Payment.Status.REFUNDED,
+                Payment.Status.MISMATCHED,
+            }:
+                webhook.status = WebhookEvent.Status.IGNORED
+            else:
+                payment.status = Payment.Status.FAILED
+                payment.last_error_code = (obj.get("last_payment_error") or {}).get("code", "payment_failed")
+                payment.last_error_message = (
+                    (obj.get("last_payment_error") or {}).get("message")
+                    or "Le paiement Stripe a échoué."
+                )[:300]
+                payment.save(
+                    update_fields=("status", "last_error_code", "last_error_message", "updated_at")
+                )
+                webhook.status = WebhookEvent.Status.PROCESSED
         elif event["type"] in {"charge.refunded", "refund.updated"}:
             webhook.status = WebhookEvent.Status.IGNORED
         else:

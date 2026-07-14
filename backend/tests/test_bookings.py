@@ -2,6 +2,8 @@ from datetime import timedelta
 from decimal import Decimal
 
 import pytest
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.urls import reverse
 from django.utils import timezone
 
@@ -10,6 +12,9 @@ from apps.locations.models import Airport, ServiceArea
 from apps.pricing.models import Quote, QuoteLine, Tariff, TripType
 from apps.bookings.models import Booking, BookingStatusHistory, PriceSnapshot
 from apps.notifications.models import EmailNotification
+
+
+User = get_user_model()
 
 
 @pytest.fixture
@@ -94,3 +99,35 @@ def test_booking_commit_survives_email_failure(
     notification = EmailNotification.objects.get()
     assert notification.status == EmailNotification.Status.FAILED
     assert Booking.objects.filter(public_id=response.json()["public_id"]).exists()
+
+
+@pytest.mark.django_db
+def test_authorized_staff_can_confirm_booking_with_audited_history(client, open_quote):
+    created = client.post(
+        reverse("bookings:create"),
+        create_payload(open_quote),
+        content_type="application/json",
+        HTTP_IDEMPOTENCY_KEY="booking-staff-confirmation",
+    ).json()
+    staff = User.objects.create_user(
+        email="dispatcher.confirmation@example.test",
+        password="Fictional-staff-password-492!",
+        is_staff=True,
+    )
+    staff.user_permissions.add(Permission.objects.get(codename="change_booking"))
+    client.force_login(staff)
+
+    response = client.post(
+        reverse("bookings:transition", args=[created["public_id"]]),
+        {"to_status": Booking.Status.CONFIRMED, "note": "Fictional operator confirmation."},
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == Booking.Status.CONFIRMED
+    history = BookingStatusHistory.objects.get(
+        booking__public_id=created["public_id"],
+        to_status=Booking.Status.CONFIRMED,
+    )
+    assert history.actor == staff
+    assert history.note == "Fictional operator confirmation."

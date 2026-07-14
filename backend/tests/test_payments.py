@@ -157,3 +157,96 @@ def test_staff_refund_is_idempotent_and_updates_payment(client, open_quote, stri
     assert replay.status_code == 201
     assert Refund.objects.count() == 1
     assert Payment.objects.get().status == Payment.Status.PARTIALLY_REFUNDED
+
+    event["id"] = "evt_refund_late_completed"
+    late_payload = json.dumps(event).encode()
+    late = client.post(
+        reverse("payments:stripe-webhook"),
+        late_payload,
+        content_type="application/json",
+        HTTP_STRIPE_SIGNATURE=sign_event(late_payload),
+    )
+    assert late.status_code == 200
+    assert Payment.objects.get().status == Payment.Status.PARTIALLY_REFUNDED
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("event_type", "event_object"),
+    [
+        ("checkout.session.expired", {"id": "cs_ordered"}),
+        (
+            "payment_intent.payment_failed",
+            {
+                "id": "pi_ordered",
+                "last_payment_error": {
+                    "code": "card_declined",
+                    "message": "Fictional late failure.",
+                },
+            },
+        ),
+    ],
+)
+def test_late_terminal_webhook_cannot_downgrade_successful_payment(
+    client, open_quote, stripe_config, monkeypatch, event_type, event_object
+):
+    monkeypatch.setattr(
+        "apps.payments.services.create_checkout_session",
+        lambda **kwargs: {"id": "cs_ordered", "url": "https://checkout.stripe.com/cs_ordered"},
+    )
+    booking = create_booking(client, open_quote)
+    client.post(
+        reverse("payments:checkout", args=[booking["public_id"]]),
+        {},
+        content_type="application/json",
+        HTTP_X_BOOKING_TOKEN=booking["management_token"],
+        HTTP_IDEMPOTENCY_KEY="pay-ordered",
+    )
+    payment = Payment.objects.get()
+    completed = {
+        "id": "evt_ordered_completed",
+        "type": "checkout.session.completed",
+        "data": {
+            "object": {
+                "id": "cs_ordered",
+                "amount_total": 8000,
+                "currency": "eur",
+                "payment_status": "paid",
+                "payment_intent": "pi_ordered",
+                "metadata": {
+                    "payment_public_id": str(payment.public_id),
+                    "booking_reference": booking["reference"],
+                    "environment": "test",
+                },
+            }
+        },
+    }
+    completed_payload = json.dumps(completed).encode()
+    completed_response = client.post(
+        reverse("payments:stripe-webhook"),
+        completed_payload,
+        content_type="application/json",
+        HTTP_STRIPE_SIGNATURE=sign_event(completed_payload),
+    )
+    assert completed_response.status_code == 200
+
+    late_event = {
+        "id": f"evt_late_{event_type.replace('.', '_')}",
+        "type": event_type,
+        "data": {"object": event_object},
+    }
+    late_payload = json.dumps(late_event).encode()
+    late_response = client.post(
+        reverse("payments:stripe-webhook"),
+        late_payload,
+        content_type="application/json",
+        HTTP_STRIPE_SIGNATURE=sign_event(late_payload),
+    )
+
+    assert late_response.status_code == 200
+    assert late_response.json()["outcome"] == WebhookEvent.Status.IGNORED
+    payment.refresh_from_db()
+    assert payment.status == Payment.Status.SUCCEEDED
+    assert payment.paid_at is not None
+    assert Booking.objects.get(public_id=booking["public_id"]).status == Booking.Status.CONFIRMED
+    assert BookingStatusHistory.objects.filter(to_status=Booking.Status.CONFIRMED).count() == 1

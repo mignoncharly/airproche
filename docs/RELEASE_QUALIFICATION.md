@@ -10,13 +10,15 @@ personal data are forbidden.
 | --- | --- |
 | Guest/authenticated booking and idempotency | `test_bookings.py`, `test_authentication.py` |
 | Cross-account dashboard, cancellation, receipts | `test_dashboard.py`, `test_security.py` |
-| Stripe checkout, signed retries, mismatch, refund | `test_payments.py` |
+| Stripe checkout, signed retries/out-of-order events, mismatch, refund | `test_payments.py` |
 | Operations confirmation, permissions, assignment conflicts/capacity | `test_operations.py`, `test_security.py` |
 | Email failure, retry, commit timing | `test_notifications.py`, `test_bookings.py` |
 | Contact abuse, injection, CSRF, Origin | `test_notifications.py`, `test_security.py` |
 | PWA manifest/cache/update/offline/mobile | frontend unit tests and `e2e/pwa.spec.ts` |
+| Keyboard, semantics, form labels, responsive browsers | `e2e/accessibility.spec.ts` on desktop and Pixel 7 |
 | SEO, analytics privacy, mobile budget | frontend SEO/analytics tests and `e2e/performance.spec.ts` |
 | Clean schema migration | pytest creates a new migrated database; `makemigrations --check` rejects drift |
+| PostgreSQL dump/restore integrity | `scripts/rehearse-postgres-restore.sh` |
 | Dependencies and tracked secrets | `scripts/audit-dependencies.sh`, `scripts/check-repo-safety.sh` |
 
 Run the complete gate from a clean commit:
@@ -31,17 +33,24 @@ desktop/Pixel 7 Playwright checks.
 
 ## PostgreSQL backup/restore rehearsal
 
-This cannot use another application’s database. After Phase 15 creates the
-dedicated Airproche role/database, qualification must additionally:
+The full gate calls `scripts/rehearse-postgres-restore.sh` and fails unless all
+three safety variables are supplied:
 
-1. create a fictional-data Airproche backup with `pg_dump --format=custom`;
-2. restore it into a newly created Airproche-only `_restore_test` database;
-3. run Django checks and row-count/integrity smoke queries against the restore;
-4. drop only that restore-test database;
-5. record timings and the tested backup artifact checksum.
+```bash
+AIRPROCHE_REHEARSAL_SOURCE_URL=postgresql://airproche_qualification@127.0.0.1:5432/airproche_qualification \
+AIRPROCHE_REHEARSAL_ADMIN_URL=postgresql://airproche_qualification@127.0.0.1:5432/postgres \
+AIRPROCHE_REHEARSAL_DATA_CLASSIFICATION=fictional \
+scripts/release-qualification.sh
+```
 
-Until this rehearsal passes, production deployment is blocked. Migration
-rollback is never inferred from application rollback and is not run blindly.
+The source name must match `airproche_*qualification`, both URLs must use a
+local host, and the source must contain fictional data only. The script refuses
+to replace a pre-existing restore database. It creates a custom-format dump,
+restores into a derived `_restore_test` database, runs Django and migration
+checks, compares every managed model row count, reports the dump SHA-256, and
+always removes the temporary dump and database. It must never target production
+or another application. Migration rollback is not inferred from application
+rollback and is never run blindly.
 
 ## Manual staging checks
 
