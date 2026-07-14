@@ -58,3 +58,19 @@ After dedicated staging configuration exists, verify keyboard/focus behavior,
 screen-reader labels, real SMTP delivery, Stripe test Checkout redirect and
 webhook delivery, cancellation/refund reconciliation, and all staff actions.
 PayPal is out of scope because it remains intentionally skipped.
+
+## Qualification record
+
+Commit `e4f855e` was qualified on 2026-07-14 with fictional data against an
+isolated temporary PostgreSQL 16 cluster. Evidence: 71 backend tests, no
+migration drift, 42 frontend unit tests, lint and type checking, production
+build, 17 passing Playwright desktop/mobile checks with the desktop-only
+performance duplicate intentionally skipped, clean repository/dependency scans,
+and a successful dump/restore/model-count rehearsal. The recorded rehearsal
+dump SHA-256 was
+`748171efed722827e8aac14f215efad33a8ce5933ec867b8cd3d1de7674441c9`;
+the temporary dump and restore database were removed by the script.
+
+Real SMTP delivery and Stripe test-provider redirects/webhook delivery remain
+mandatory isolated staging checks in Phases 15-16. No live payment mode,
+production credential, production data, or PayPal configuration was used.

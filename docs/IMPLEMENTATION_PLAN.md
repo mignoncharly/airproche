@@ -1,6 +1,6 @@
 # Airport Transfer Platform — Architecture and Implementation Plan
-Status: Phases 0-6 and 8-13 complete; Phase 7 (PayPal) skipped by decision; Phase 14 release gate is in progress
-Last updated: 2026-07-13
+Status: Phases 0-6 and 8-14 complete; Phase 7 (PayPal) skipped by decision; Phase 15 is next
+Last updated: 2026-07-14
 Source of truth: `prompt.md`
 
 ## 1. Purpose and current-state audit
