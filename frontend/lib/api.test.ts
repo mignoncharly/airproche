@@ -18,6 +18,7 @@ describe("getBackendHealth", () => {
     await expect(getBackendHealth()).resolves.toEqual({ status: "ok" });
     expect(fetch).toHaveBeenCalledWith("http://backend.test/api/v1/health/live/", {
       cache: "no-store",
+      headers: { "X-Forwarded-Proto": "https" },
     });
   });
 

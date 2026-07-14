@@ -90,6 +90,7 @@ export async function getPublicContent(): Promise<PublicContent> {
 
   try {
     const response = await fetch(`${base.replace(/\/$/, "")}/api/v1/public/content/`, {
+      headers: { "X-Forwarded-Proto": "https" },
       next: { revalidate: 60 },
     });
     if (!response.ok) throw new Error(`public content status ${response.status}`);

@@ -13,6 +13,7 @@ function serverApiBase(): string {
 export async function getBackendHealth(): Promise<{ status: "ok" }> {
   const response = await fetch(`${serverApiBase()}/api/v1/health/live/`, {
     cache: "no-store",
+    headers: { "X-Forwarded-Proto": "https" },
   });
   if (!response.ok) {
     throw new Error(`Backend health request failed with status ${response.status}.`);

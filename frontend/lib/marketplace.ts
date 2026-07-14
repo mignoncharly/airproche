@@ -12,14 +12,14 @@ function base() { return process.env.BACKEND_INTERNAL_URL?.replace(/\/$/, ""); }
 export async function getDrivers(): Promise<MarketplaceDriver[]> {
   if (!base()) return [];
   try {
-    const response = await fetch(`${base()}/api/v1/marketplace/drivers/`, { next: { revalidate: 60 } });
+    const response = await fetch(`${base()}/api/v1/marketplace/drivers/`, { headers: { "X-Forwarded-Proto": "https" }, next: { revalidate: 60 } });
     return response.ok ? driverSchema.array().parse(await response.json()) : [];
   } catch { return []; }
 }
 export async function getDriver(id: string): Promise<MarketplaceDriver | null> {
   if (!base()) return null;
   try {
-    const response = await fetch(`${base()}/api/v1/marketplace/drivers/${encodeURIComponent(id)}/`, { next: { revalidate: 60 } });
+    const response = await fetch(`${base()}/api/v1/marketplace/drivers/${encodeURIComponent(id)}/`, { headers: { "X-Forwarded-Proto": "https" }, next: { revalidate: 60 } });
     return response.ok ? driverSchema.parse(await response.json()) : null;
   } catch { return null; }
 }

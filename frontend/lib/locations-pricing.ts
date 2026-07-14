@@ -122,7 +122,10 @@ async function serverGet<T>(path: string, schema: z.ZodType<T>): Promise<T | nul
   const base = serverApiBase();
   if (!base) return null;
   try {
-    const response = await fetch(`${base}${path}`, { next: { revalidate: 60 } });
+    const response = await fetch(`${base}${path}`, {
+      headers: { "X-Forwarded-Proto": "https" },
+      next: { revalidate: 60 },
+    });
     if (!response.ok) return null;
     return schema.parse(await response.json());
   } catch (error) {
