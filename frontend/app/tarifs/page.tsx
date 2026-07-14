@@ -17,14 +17,14 @@ export default async function PricingPage() {
     getPublicContent(),
     getLocationsAndCoverage(),
   ]);
-  const canEstimate = locationData.coverage.routes.length > 0;
+  const canEstimate = false;
 
   return (
     <main>
       <PageHero
         eyebrow="Tarification"
-        title="Un prix clair avant vos coordonnées"
-        description="Le serveur sélectionne le tarif actif entre l’aéroport et la zone, puis détaille chaque option applicable."
+        title="Les prix sont proposes par chaque chauffeur"
+        description="Airproche ne fixe ni ne collecte le prix du trajet. Demandez une proposition directement au chauffeur choisi."
       />
       <section className="site-container py-16 sm:py-24">
         {canEstimate ? (
@@ -36,8 +36,8 @@ export default async function PricingPage() {
             maximumBookingDays={settings.maximum_booking_days}
           />
         ) : (
-          <EmptyNotice title="Estimations en ligne non ouvertes">
-            <p>Aucun trajet complet n’est actuellement publié. Une estimation apparaîtra ici dès qu’un aéroport, une zone et leur tarif auront été activés.</p>
+          <EmptyNotice title="Contactez un chauffeur pour obtenir son prix">
+            <p>La demande est non contraignante. Le chauffeur confirme directement sa disponibilite, son prix et ses conditions avant tout engagement.</p>
           </EmptyNotice>
         )}
 

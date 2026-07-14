@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AuditEvent, Driver, DriverAssignment, Vehicle
+from .models import AuditEvent, Driver, DriverAssignment, DriverInquiry, MarketplaceDriverProfile, Vehicle
 
 
 @admin.register(Driver)
@@ -9,6 +9,22 @@ class DriverAdmin(admin.ModelAdmin):
     list_filter = ("active",)
     search_fields = ("first_name", "last_name", "email", "phone")
     filter_horizontal = ("service_areas",)
+
+
+@admin.register(MarketplaceDriverProfile)
+class MarketplaceDriverProfileAdmin(admin.ModelAdmin):
+    list_display = ("display_name", "business_name", "verification_status", "is_published", "updated_at")
+    list_filter = ("verification_status", "is_published", "accepts_quote_requests")
+    search_fields = ("display_name", "business_name", "business_identifier", "user__email")
+    filter_horizontal = ("airports", "service_areas")
+
+
+@admin.register(DriverInquiry)
+class DriverInquiryAdmin(admin.ModelAdmin):
+    list_display = ("customer_name", "driver", "airport", "status", "created_at")
+    list_filter = ("status", "airport")
+    search_fields = ("customer_name", "customer_email", "customer_phone", "destination")
+    readonly_fields = ("public_id", "created_at", "updated_at")
 
 
 @admin.register(Vehicle)

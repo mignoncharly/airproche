@@ -225,6 +225,7 @@ REST_FRAMEWORK = {
         "auth_password_reset": "10/hour",
         "auth_token": "30/hour",
         "quote": "60/hour",
+        "driver_inquiry": "10/hour",
         "booking_create": "20/hour",
         "booking_access": "30/hour",
         "booking_mutation": "20/hour",

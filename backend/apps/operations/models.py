@@ -9,7 +9,7 @@ from django.db import models
 
 from apps.accounts.models import User
 from apps.bookings.models import Booking
-from apps.locations.models import ServiceArea
+from apps.locations.models import Airport, ServiceArea
 
 
 class Driver(models.Model):
@@ -35,6 +35,64 @@ class Driver(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+class MarketplaceDriverProfile(models.Model):
+    class VerificationStatus(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        PENDING = "pending", "Pending review"
+        VERIFIED = "verified", "Verified"
+        REJECTED = "rejected", "Rejected"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="driver_profile")
+    display_name = models.CharField(max_length=180)
+    business_name = models.CharField(max_length=180, blank=True)
+    business_identifier = models.CharField(max_length=80, blank=True)
+    vtc_card_number = models.CharField(max_length=80, blank=True)
+    insurance_provider = models.CharField(max_length=180, blank=True)
+    bio = models.TextField(blank=True, max_length=2000)
+    phone = models.CharField(max_length=32)
+    max_passengers = models.PositiveSmallIntegerField(default=4, validators=(MinValueValidator(1),))
+    service_areas = models.ManyToManyField(ServiceArea, blank=True, related_name="marketplace_drivers")
+    airports = models.ManyToManyField(Airport, blank=True, related_name="marketplace_drivers")
+    verification_status = models.CharField(max_length=16, choices=VerificationStatus.choices, default=VerificationStatus.DRAFT)
+    is_published = models.BooleanField(default=False)
+    accepts_quote_requests = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("display_name",)
+        indexes = [models.Index(fields=("is_published", "verification_status"))]
+
+    def __str__(self) -> str:
+        return self.display_name
+
+
+class DriverInquiry(models.Model):
+    class Status(models.TextChoices):
+        NEW = "new", "New"
+        CONTACTED = "contacted", "Contacted"
+        CLOSED = "closed", "Closed"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    driver = models.ForeignKey(MarketplaceDriverProfile, on_delete=models.PROTECT, related_name="inquiries")
+    airport = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT)
+    customer_name = models.CharField(max_length=180)
+    customer_email = models.EmailField()
+    customer_phone = models.CharField(max_length=32)
+    destination = models.CharField(max_length=300)
+    pickup_at = models.DateTimeField(null=True, blank=True)
+    passenger_count = models.PositiveSmallIntegerField(default=1, validators=(MinValueValidator(1),))
+    message = models.TextField(blank=True, max_length=2000)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.NEW)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [models.Index(fields=("driver", "status", "created_at"))]
+
 
 
 class Vehicle(models.Model):

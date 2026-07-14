@@ -1,4 +1,5 @@
 export const primaryNavigation = [
+  { href: "/chauffeurs", label: "Chauffeurs" },
   { href: "/services", label: "Services" },
   { href: "/aeroports", label: "Aéroports" },
   { href: "/fonctionnement", label: "Fonctionnement" },
@@ -38,7 +39,7 @@ export const trustPoints = [
 
 export const processSteps = [
   { number: "01", title: "Préparez la demande", description: "Indiquez le trajet, la date et les besoins du passager." },
-  { number: "02", title: "Recevez la confirmation", description: "Le prix, l’horaire et les conditions sont récapitulés par écrit." },
-  { number: "03", title: "Retrouvez le chauffeur", description: "Les consignes de rencontre sont communiquées avant l’arrivée." },
+  { number: "02", title: "Contactez un chauffeur", description: "Votre demande est transmise sans creer de reservation." },
+  { number: "03", title: "Confirmez directement", description: "Le chauffeur confirme son prix, sa disponibilite et ses conditions." },
   { number: "04", title: "Voyagez sereinement", description: "Le passager rejoint sa destination en transport privé." },
 ] as const;
