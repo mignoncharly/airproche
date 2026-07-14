@@ -91,7 +91,7 @@ export function PwaManager() {
   if (!installPrompt && !iosInstallAvailable && !waitingWorker) return null;
 
   return (
-    <aside className="fixed inset-x-3 bottom-3 z-[80] mx-auto max-w-xl border border-slate-300 bg-white p-4 shadow-xl sm:inset-x-auto sm:right-5 sm:mx-0" aria-label="Installation de l’application">
+    <aside className="pointer-events-auto w-full max-w-xl rounded-2xl border border-slate-300 bg-white p-4 shadow-xl" aria-label="Installation de l’application">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm font-bold text-slate-950">
           {waitingWorker ? "Une mise à jour est prête." : "Installer Airproche sur cet appareil."}

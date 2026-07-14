@@ -8,6 +8,7 @@ fi
 
 APP_USER=mignon
 APP_GROUP=mignon
+NGINX_GROUP=www-data
 APP_ROOT=/home/mignon/airproche
 SHARED="$APP_ROOT/shared"
 ENV_FILE="$SHARED/.env.production"
@@ -22,11 +23,15 @@ if [[ ! -d "$APP_ROOT/.git" ]] || [[ "$(git -C "$APP_ROOT" remote get-url origin
   printf 'The Airproche GitHub checkout was not found at %s.\n' "$APP_ROOT" >&2
   exit 1
 fi
-for command in openssl psql createdb nginx systemctl ss install runuser git; do
+for command in openssl psql createdb nginx systemctl ss install runuser git getent; do
   command -v "$command" >/dev/null || { printf 'Missing required command: %s\n' "$command" >&2; exit 1; }
 done
 if ! id "$APP_USER" >/dev/null 2>&1; then
   printf 'Required application user %s does not exist.\n' "$APP_USER" >&2
+  exit 1
+fi
+if ! getent group "$NGINX_GROUP" >/dev/null 2>&1; then
+  printf 'Required Nginx group %s does not exist.\n' "$NGINX_GROUP" >&2
   exit 1
 fi
 for port in 3050 8050; do
@@ -39,6 +44,8 @@ done
 install -d -m 0750 -o "$APP_USER" -g "$APP_GROUP" \
   "$APP_ROOT/releases" "$SHARED" "$SHARED/static" "$SHARED/media" \
   "$SHARED/next-cache" "$APP_ROOT/backups"
+install -d -m 0710 -o "$APP_USER" -g "$NGINX_GROUP" "$SHARED"
+install -d -m 0750 -o "$APP_USER" -g "$NGINX_GROUP" "$SHARED/static"
 
 if [[ -e "$ENV_FILE" ]]; then
   printf 'Refusing to overwrite existing %s.\n' "$ENV_FILE" >&2

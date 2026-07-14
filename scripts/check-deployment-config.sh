@@ -22,6 +22,10 @@ if grep -q 'ALTER ROLE airproche' scripts/bootstrap-production.sh; then
 fi
 grep -q 'STRIPE_ENVIRONMENT=test' scripts/bootstrap-production.sh
 grep -q 'STRIPE_LIVE_MODE_CONFIRMED=false' scripts/bootstrap-production.sh
+grep -q 'NGINX_GROUP=www-data' scripts/bootstrap-production.sh
+grep -q 'NGINX_GROUP=www-data' scripts/deploy-production.sh
+grep -q 'install -d -m 0710 -o "$APP_USER" -g "$NGINX_GROUP" "$SHARED"' scripts/deploy-production.sh
+grep -q 'install -d -m 0750 -o "$APP_USER" -g "$NGINX_GROUP" "$SHARED/static"' scripts/deploy-production.sh
 grep -q 'certbot certonly' scripts/enable-production-tls.sh
 grep -q -- '--config-dir /etc/letsencrypt-airproche' scripts/enable-production-tls.sh
 if grep -REq '/etc/letsencrypt/live/' deploy scripts/enable-production-tls.sh scripts/airproche-cert-deploy-hook.sh; then

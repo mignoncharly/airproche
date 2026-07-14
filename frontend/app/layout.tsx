@@ -47,8 +47,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <SiteHeader settings={settings} />
         <div id="contenu">{children}</div>
         <SiteFooter settings={settings} />
-        <PwaManager />
-        <AnalyticsConsentBanner />
+        <div className="pointer-events-none fixed inset-x-3 bottom-3 z-[80] flex flex-col items-end gap-3 sm:left-auto sm:right-5 sm:w-[min(36rem,calc(100vw-2.5rem))]">
+          <AnalyticsConsentBanner />
+          <PwaManager />
+        </div>
       </body>
     </html>
   );

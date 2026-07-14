@@ -8,15 +8,20 @@ fi
 
 APP_USER=mignon
 APP_GROUP=mignon
+NGINX_GROUP=www-data
 APP_ROOT=/home/mignon/airproche
 SHARED="$APP_ROOT/shared"
 ENV_FILE="$SHARED/.env.production"
 WEB_ENV_FILE="$SHARED/.env.web"
 SOURCE_REF=${1:-origin/main}
 
-for command in git python3 npm node curl systemctl runuser tar ln mv nice; do
+for command in git python3 npm node curl systemctl runuser tar ln mv nice getent install; do
   command -v "$command" >/dev/null || { printf 'Missing required command: %s\n' "$command" >&2; exit 1; }
 done
+if ! getent group "$NGINX_GROUP" >/dev/null 2>&1; then
+  printf 'Required Nginx group %s does not exist.\n' "$NGINX_GROUP" >&2
+  exit 1
+fi
 for file in "$ENV_FILE" "$WEB_ENV_FILE" /etc/systemd/system/airproche-api.service /etc/systemd/system/airproche-web.service; do
   [[ -f "$file" ]] || { printf 'Missing bootstrap artifact: %s\n' "$file" >&2; exit 1; }
 done
@@ -49,6 +54,11 @@ if [[ "${STAFF_NETWORK_GATE_ENABLED:-}" != true ]] || [[ -z "${STAFF_ALLOWED_NET
   printf 'The production staff network gate must be configured.\n' >&2
   exit 1
 fi
+
+# Nginx needs group-scoped traversal to serve collected Django admin assets.
+# Provider secrets remain protected by their independent mode-0600 files.
+install -d -m 0710 -o "$APP_USER" -g "$NGINX_GROUP" "$SHARED"
+install -d -m 0750 -o "$APP_USER" -g "$NGINX_GROUP" "$SHARED/static"
 
 available_kib="$(awk '/MemAvailable:/ {print $2}' /proc/meminfo)"
 if (( available_kib < 700000 )); then

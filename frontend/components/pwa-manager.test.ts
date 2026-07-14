@@ -6,6 +6,10 @@ const source = readFileSync(
   fileURLToPath(new URL("./pwa-manager.tsx", import.meta.url)),
   "utf8",
 );
+const layoutSource = readFileSync(
+  fileURLToPath(new URL("../app/layout.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("PWA install and update UI", () => {
   it("uses the supported Android install prompt and accurate iOS Safari steps", () => {
@@ -22,9 +26,13 @@ describe("PWA install and update UI", () => {
     expect(source).not.toContain("registration.skipWaiting");
   });
 
-  it("uses a bounded responsive install surface", () => {
-    expect(source).toContain("inset-x-3");
-    expect(source).toContain("max-w-xl");
+  it("shares a bounded responsive notice stack without covering consent controls", () => {
+    expect(layoutSource).toContain("fixed inset-x-3 bottom-3");
+    expect(layoutSource).toContain("flex flex-col items-end gap-3");
+    expect(layoutSource).toContain("sm:w-[min(36rem");
+    expect(layoutSource.indexOf("<AnalyticsConsentBanner />"))
+      .toBeLessThan(layoutSource.indexOf("<PwaManager />"));
+    expect(source).toContain("pointer-events-auto w-full max-w-xl rounded-2xl");
     expect(source).toContain("flex flex-wrap");
   });
 });
