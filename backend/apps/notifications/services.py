@@ -298,12 +298,14 @@ def send_account_notification(user, raw_token: str, *, purpose: str) -> bool:
         template_key = "account.verify.fr"
         link = f"{settings.APP_BASE_URL}/verification-email#token={quote(raw_token)}"
         content = (
-            "Vérifiez votre adresse e-mail",
+            "Bienvenue sur AirProche — confirmez votre adresse e-mail",
             (
-                f"Bonjour {first_name}\n\n"
-                "Confirmez votre adresse e-mail en ouvrant ce lien valable 24 heures :\n"
+                f"Bonjour {first_name},\n\n"
+                "Bienvenue sur AirProche, la plateforme qui vous permet de trouver et de contacter des chauffeurs indépendants pour vos transferts depuis ou vers l’aéroport.\n\n"
+                "Pour activer votre compte, confirmez votre adresse e-mail en cliquant sur le lien suivant. Ce lien est valable 24 heures et ne peut être utilisé qu’une seule fois :\n"
                 f"{link}\n\n"
-                "Si vous n’avez pas créé ce compte, ignorez ce message."
+                "Après confirmation, vous pourrez gérer votre compte et, si vous êtes chauffeur, préparer votre profil public pour examen. AirProche ne confirme pas les trajets et ne perçoit pas le paiement du transport : ces éléments sont convenus directement avec le chauffeur.\n\n"
+                "Si vous n’êtes pas à l’origine de cette inscription, aucune action n’est requise. Contactez-nous depuis la page Contact d’AirProche si nécessaire.\n\nL’équipe AirProche."
             ),
         )
     elif purpose == "reset_password":
@@ -313,7 +315,8 @@ def send_account_notification(user, raw_token: str, *, purpose: str) -> bool:
         content = (
             "Réinitialisez votre mot de passe",
             (
-                f"Bonjour {first_name}\n\n"
+                f"Bonjour {first_name},\n\n"
+                "Bienvenue sur AirProche, la plateforme qui vous permet de trouver et de contacter des chauffeurs indépendants pour vos transferts depuis ou vers l’aéroport.\n\n"
                 "Choisissez un nouveau mot de passe avec ce lien valable une heure :\n"
                 f"{link}\n\n"
                 "Si vous n’avez pas demandé ce changement, ignorez ce message."
