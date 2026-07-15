@@ -227,7 +227,7 @@ class MyDriverProfileView(APIView):
 
 
 class DriverOnboardingOptionsView(APIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
 
     def get(self, request):
         return Response({
