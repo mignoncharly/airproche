@@ -5,6 +5,7 @@ import hmac
 import json
 import logging
 from collections.abc import Callable
+from datetime import timedelta
 from urllib.parse import quote
 
 from django.conf import settings
@@ -75,6 +76,51 @@ def _contact_received(context: dict) -> tuple[str, str]:
     )
 
 
+def _inquiry_customer_ack(context: dict) -> tuple[str, str]:
+    name = _clean_line(context.get("customer_name"), 180)
+    driver = _clean_line(context.get("driver_name"), 180)
+    reference = _clean_line(context.get("reference"), 24)
+    airport = _clean_line(context.get("airport"), 180)
+    destination = _clean_line(context.get("destination"), 300)
+    travel_date = _clean_line(context.get("travel_date"), 80)
+    return (
+        f"Votre demande {reference} a été reçue par AirProche",
+        f"Bonjour {name},\n\nVotre demande a été enregistrée et transmise à {driver}. "
+        "Le trajet n’est pas encore confirmé. Le chauffeur vous contactera directement "
+        "pour confirmer sa disponibilité, le tarif et les modalités.\n\n"
+        f"Aéroport : {airport}\nTrajet : {destination}\nDate : {travel_date}\n"
+        f"Référence : {reference}\n\nNe communiquez jamais de données bancaires par e-mail. "
+        f"Consultez notre politique de confidentialité : {settings.APP_BASE_URL}/confidentialite\n"
+        f"Signaler un abus : {settings.APP_BASE_URL}/contact\n\nL’équipe AirProche",
+    )
+
+
+def _inquiry_driver_new(context: dict) -> tuple[str, str]:
+    driver = _clean_line(context.get("driver_name"), 180)
+    reference = _clean_line(context.get("reference"), 24)
+    airport = _clean_line(context.get("airport"), 180)
+    destination = _clean_line(context.get("destination"), 300)
+    return (
+        f"Nouvelle demande AirProche {reference}",
+        f"Bonjour {driver},\n\nUne nouvelle demande est disponible dans votre espace chauffeur.\n"
+        f"Aéroport : {airport}\nTrajet : {destination}\nRéférence : {reference}\n\n"
+        f"Consultez-la depuis {settings.APP_BASE_URL}/compte. Le tarif et la disponibilité "
+        "doivent être confirmés directement avec le client.\n\nL’équipe AirProche",
+    )
+
+
+def _inquiry_status(context: dict) -> tuple[str, str]:
+    name = _clean_line(context.get("customer_name"), 180)
+    reference = _clean_line(context.get("reference"), 24)
+    status_label = _clean_line(context.get("status_label"), 120)
+    return (
+        f"Mise à jour de votre demande {reference}",
+        f"Bonjour {name},\n\nLe chauffeur a mis à jour votre demande : {status_label}. "
+        "Cette mise à jour ne remplace pas la confirmation directe du tarif et des modalités.\n\n"
+        "L’équipe AirProche",
+    )
+
+
 def _single_use_link_unavailable(context: dict) -> tuple[str, str]:
     raise ValueError("Single-use links are only rendered during their initial delivery.")
 
@@ -85,6 +131,9 @@ RENDERERS: dict[str, Callable[[dict], tuple[str, str]]] = {
     "booking.created.fr": _booking_created,
     "booking.status.fr": _booking_status,
     "contact.received.fr": _contact_received,
+    "inquiry.customer_ack.fr": _inquiry_customer_ack,
+    "inquiry.driver_new.fr": _inquiry_driver_new,
+    "inquiry.status.fr": _inquiry_status,
 }
 TEMPLATE_KINDS = {
     "account.verify.fr": EmailNotification.Kind.VERIFY_EMAIL,
@@ -92,6 +141,9 @@ TEMPLATE_KINDS = {
     "booking.created.fr": EmailNotification.Kind.BOOKING_CREATED,
     "booking.status.fr": EmailNotification.Kind.BOOKING_STATUS,
     "contact.received.fr": EmailNotification.Kind.CONTACT_RECEIVED,
+    "inquiry.customer_ack.fr": EmailNotification.Kind.INQUIRY_CUSTOMER_ACK,
+    "inquiry.driver_new.fr": EmailNotification.Kind.INQUIRY_DRIVER_NEW,
+    "inquiry.status.fr": EmailNotification.Kind.INQUIRY_STATUS,
 }
 
 
@@ -170,9 +222,31 @@ def deliver_notification(
                 error_code=type(exc).__name__[:80],
                 error_message="The email provider did not accept the delivery."[:300],
             )
-            notification.status = EmailNotification.Status.FAILED
+            notification.status = (
+                EmailNotification.Status.FAILED
+                if notification.retryable and attempt_number < notification.max_attempts
+                else EmailNotification.Status.PERMANENT_FAILURE
+            )
             notification.last_attempt_at = now
-            notification.save(update_fields=("status", "last_attempt_at", "updated_at"))
+            notification.next_attempt_at = (
+                now + timedelta(minutes=2**attempt_number)
+                if notification.status == EmailNotification.Status.RETRYING
+                else None
+            )
+            notification.error_category = type(exc).__name__[:80]
+            notification.safe_error_summary = (
+                "Le fournisseur de messagerie n’a pas accepté l’envoi."
+            )
+            notification.save(
+                update_fields=(
+                    "status",
+                    "last_attempt_at",
+                    "next_attempt_at",
+                    "error_category",
+                    "safe_error_summary",
+                    "updated_at",
+                )
+            )
             return attempt
 
         attempt = EmailDeliveryAttempt.objects.create(
@@ -184,8 +258,25 @@ def deliver_notification(
         )
         notification.status = EmailNotification.Status.SENT
         notification.sent_at = now
+        notification.delivered_at = now
         notification.last_attempt_at = now
-        notification.save(update_fields=("status", "sent_at", "last_attempt_at", "updated_at"))
+        notification.next_attempt_at = None
+        notification.provider_identifier = attempt.request_key
+        notification.error_category = ""
+        notification.safe_error_summary = ""
+        notification.save(
+            update_fields=(
+                "status",
+                "sent_at",
+                "delivered_at",
+                "last_attempt_at",
+                "next_attempt_at",
+                "provider_identifier",
+                "error_category",
+                "safe_error_summary",
+                "updated_at",
+            )
+        )
         return attempt
 
 
@@ -261,6 +352,62 @@ def retry_notification(notification: EmailNotification, *, idempotency_key: str)
         notification.pk,
         request_key=f"retry:{notification.public_id}:{idempotency_key}",
     )
+
+
+def enqueue_inquiry_notifications(inquiry_id: int) -> None:
+    def callback():
+        from apps.operations.models import DriverInquiry, InquiryStatusHistory
+
+        inquiry = DriverInquiry.objects.select_related("driver__user", "airport").get(pk=inquiry_id)
+        context = {
+            "customer_name": inquiry.customer_name,
+            "driver_name": inquiry.driver.display_name,
+            "reference": inquiry.reference,
+            "airport": inquiry.airport.name,
+            "destination": inquiry.destination,
+            "travel_date": inquiry.pickup_at.isoformat() if inquiry.pickup_at else "À convenir",
+        }
+        customer, _ = create_and_deliver(
+            kind=EmailNotification.Kind.INQUIRY_CUSTOMER_ACK,
+            template_key="inquiry.customer_ack.fr",
+            recipient_email=inquiry.customer_email,
+            context=context,
+            idempotency_key=f"inquiry:{inquiry.public_id}:customer-ack",
+            related_type="driver_inquiry",
+            related_public_id=inquiry.public_id,
+        )
+        driver_email = inquiry.driver.professional_email or inquiry.driver.user.email
+        driver, _ = create_and_deliver(
+            kind=EmailNotification.Kind.INQUIRY_DRIVER_NEW,
+            template_key="inquiry.driver_new.fr",
+            recipient_email=driver_email,
+            context=context,
+            idempotency_key=f"inquiry:{inquiry.public_id}:driver-new",
+            related_type="driver_inquiry",
+            related_public_id=inquiry.public_id,
+        )
+        if (
+            driver.status == EmailNotification.Status.SENT
+            and inquiry.status == DriverInquiry.Status.NEW
+        ):
+            inquiry.status = DriverInquiry.Status.NOTIFIED
+            inquiry.save(update_fields=("status", "updated_at"))
+            InquiryStatusHistory.objects.create(
+                inquiry=inquiry,
+                from_status=DriverInquiry.Status.NEW,
+                to_status=DriverInquiry.Status.NOTIFIED,
+            )
+        logger.info(
+            "Marketplace inquiry delivery completed",
+            extra={
+                "event": "marketplace_inquiry_delivery",
+                "inquiry_id": str(inquiry.public_id),
+                "customer_status": customer.status,
+                "driver_status": driver.status,
+            },
+        )
+
+    transaction.on_commit(callback, robust=True)
 
 
 def enqueue_booking_notification(booking_id: int, event_key: str, *, created=False) -> None:

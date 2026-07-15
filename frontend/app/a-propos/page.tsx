@@ -16,7 +16,7 @@ export default async function AboutPage() {
       <section className="site-container py-16 sm:py-24">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
           <SectionHeading eyebrow="Notre approche" title="Le professionnalisme se voit dans les détails" description="Une heure, un point de rencontre, une destination et un moyen de contact clairement établis : ce sont ces informations simples qui rendent une arrivée plus sereine." />
-          <div className="rounded-[2rem] bg-blue-50 p-8 sm:p-10"><Icon name="shield" className="size-10 text-blue-700" /><p className="mt-7 text-2xl font-black tracking-tight text-slate-950">La confiance ne repose pas sur une promesse vague.</p><p className="mt-4 leading-7 text-slate-600">Elle repose sur une tarification compréhensible, un paiement vérifié, des consignes utiles et un interlocuteur identifiable.</p></div>
+          <div className="rounded-[2rem] bg-blue-50 p-8 sm:p-10"><Icon name="shield" className="size-10 text-blue-700" /><p className="mt-7 text-2xl font-black tracking-tight text-slate-950">La confiance ne repose pas sur une promesse vague.</p><p className="mt-4 leading-7 text-slate-600">Elle repose sur des profils professionnels contrôlés, un rôle clairement expliqué et un échange direct avec le chauffeur indépendant.</p></div>
         </div>
         <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{trustPoints.map((point) => <article key={point.title} className="surface-card p-6"><Icon name={point.icon} className="size-7 text-blue-700" /><h2 className="mt-5 font-extrabold text-slate-950">{point.title}</h2><p className="mt-2 text-sm leading-6 text-slate-600">{point.description}</p></article>)}</div>
       </section>

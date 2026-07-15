@@ -10,6 +10,7 @@ from django.utils import timezone
 from apps.accounts.models import AccountToken
 from apps.bookings.models import Booking, GuestAccessToken, IdempotencyRecord
 from apps.notifications.models import ContactMessage, EmailNotification
+from apps.operations.models import DriverInquiry
 
 
 class Command(BaseCommand):
@@ -20,6 +21,8 @@ class Command(BaseCommand):
         parser.add_argument("--contact-days", type=int, required=True)
         parser.add_argument("--notification-days", type=int, required=True)
         parser.add_argument("--token-grace-days", type=int, default=7)
+        parser.add_argument("--marketplace-inquiry-days", type=int, default=365)
+        parser.add_argument("--marketplace-spam-days", type=int, default=30)
         parser.add_argument("--apply", action="store_true")
 
     def handle(self, *args, **options):
@@ -28,6 +31,8 @@ class Command(BaseCommand):
             "contact": options["contact_days"],
             "notification": options["notification_days"],
             "token_grace": options["token_grace_days"],
+            "marketplace_inquiry": options["marketplace_inquiry_days"],
+            "marketplace_spam": options["marketplace_spam_days"],
         }
         if any(value < 1 for value in periods.values()):
             raise CommandError("Retention periods must be positive whole days.")
@@ -52,6 +57,20 @@ class Command(BaseCommand):
             Q(expires_at__lt=token_cutoff) | Q(revoked_at__lt=token_cutoff)
         )
         idempotency = IdempotencyRecord.objects.filter(expires_at__lt=now)
+        marketplace_inquiries = DriverInquiry.objects.filter(
+            status__in=(
+                DriverInquiry.Status.DECLINED,
+                DriverInquiry.Status.CLOSED,
+                DriverInquiry.Status.ARCHIVED,
+            ),
+            updated_at__lt=now - timedelta(days=periods["marketplace_inquiry"]),
+            anonymized_at__isnull=True,
+        )
+        marketplace_spam = DriverInquiry.objects.filter(
+            status=DriverInquiry.Status.SPAM,
+            updated_at__lt=now - timedelta(days=periods["marketplace_spam"]),
+            anonymized_at__isnull=True,
+        )
 
         counts = {
             "bookings_to_anonymize": bookings.count(),
@@ -60,6 +79,8 @@ class Command(BaseCommand):
             "account_tokens_to_delete": account_tokens.count(),
             "guest_tokens_to_delete": guest_tokens.count(),
             "idempotency_records_to_delete": idempotency.count(),
+            "marketplace_inquiries_to_anonymize": marketplace_inquiries.count(),
+            "marketplace_spam_to_anonymize": marketplace_spam.count(),
         }
         for key, value in counts.items():
             self.stdout.write(f"{key}={value}")
@@ -77,6 +98,8 @@ class Command(BaseCommand):
             account_tokens.delete()
             guest_tokens.delete()
             idempotency.delete()
+            for inquiry in (marketplace_inquiries | marketplace_spam).select_for_update().distinct():
+                self._anonymize_marketplace_inquiry(inquiry)
         self.stdout.write(self.style.SUCCESS("Approved retention policy applied."))
 
     @staticmethod
@@ -151,3 +174,27 @@ class Command(BaseCommand):
         booking.status_history.update(note="")
         booking.guest_tokens.all().delete()
         booking.driver_assignments.update(override_reason="")
+
+    @staticmethod
+    def _anonymize_marketplace_inquiry(inquiry: DriverInquiry) -> None:
+        marker = inquiry.public_id.hex
+        inquiry.customer_name = "Client anonymisé"
+        inquiry.customer_email = f"anonymized+{marker}@example.invalid"
+        inquiry.customer_phone = ""
+        inquiry.customer_whatsapp = ""
+        inquiry.destination = ""
+        inquiry.message = ""
+        inquiry.source_fingerprint = ""
+        inquiry.request_hash = ""
+        inquiry.idempotency_key = ""
+        inquiry.anonymized_at = timezone.now()
+        inquiry.save(update_fields=(
+            "customer_name", "customer_email", "customer_phone", "customer_whatsapp",
+            "destination", "message", "source_fingerprint", "request_hash",
+            "idempotency_key", "anonymized_at", "updated_at",
+        ))
+        inquiry.notes.all().delete()
+        inquiry.status_history.update(note="", customer_visible_note="")
+        EmailNotification.objects.filter(
+            related_type="driver_inquiry", related_public_id=inquiry.public_id
+        ).delete()

@@ -8,7 +8,6 @@ import { z } from "zod";
 
 import { FormField, FormStatus } from "@/components/auth/auth-shell";
 import { type AccountUser, currentAccount, logoutAccount, resendVerification, updateProfile } from "@/lib/auth-api";
-import { CustomerDashboard } from "@/features/bookings/customer-dashboard";
 import { DriverDashboard } from "@/features/marketplace/driver-dashboard";
 
 const schema = z.object({
@@ -56,7 +55,6 @@ export function AccountPanel() {
       </form>
       <div className="border-t border-slate-200 pt-6"><button type="button" className="text-sm font-bold text-slate-600 hover:text-red-700" onClick={signOut}>Se déconnecter</button></div>
       <DriverDashboard />
-      <CustomerDashboard />
     </div>
   );
 }

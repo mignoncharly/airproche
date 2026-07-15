@@ -5,7 +5,6 @@ import { Icon } from "@/components/icon";
 import { ContactCta, Eyebrow, SectionHeading } from "@/components/marketing";
 import { StructuredData } from "@/components/structured-data";
 import { processSteps, serviceHighlights, trustPoints } from "@/lib/marketing-data";
-import { getLocationsAndCoverage } from "@/lib/locations-pricing";
 import { getPublicContent } from "@/lib/public-content";
 import { businessStructuredData, publicMetadata } from "@/lib/seo";
 
@@ -16,11 +15,7 @@ export const metadata = publicMetadata(
 );
 
 export default async function HomePage() {
-  const [content, locationData] = await Promise.all([
-    getPublicContent(),
-    getLocationsAndCoverage(),
-  ]);
-  const estimationAvailable = locationData.coverage.routes.length > 0;
+  const content = await getPublicContent();
   const services = content.services.length ? content.services : serviceHighlights;
   const structuredData = businessStructuredData(content.settings, content.services);
 
@@ -35,10 +30,10 @@ export default async function HomePage() {
             <h1 className="mt-6 text-balance text-5xl font-black leading-[1.02] tracking-[-0.055em] text-slate-950 sm:text-6xl lg:text-7xl">Le trajet commence par un accueil rassurant.</h1>
             <p className="mt-6 max-w-xl text-pretty text-lg leading-8 text-slate-600">Organisez le transport d’un proche, d’un ami ou de votre groupe depuis l’aéroport jusqu’à sa destination, avec des informations claires à chaque étape.</p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link href={estimationAvailable ? "/tarifs" : "/services"} className="button button-primary px-5">{estimationAvailable ? "Obtenir une estimation" : "Découvrir les services"} <Icon name="arrow" className="size-4" /></Link>
+              <Link href="/chauffeurs" className="button button-primary px-5">Trouver un chauffeur <Icon name="arrow" className="size-4" /></Link>
               <Link href="/fonctionnement" className="button button-secondary px-5">Comment ça marche</Link>
             </div>
-            <p className="mt-6 flex items-start gap-2 text-sm leading-6 text-slate-600"><Icon name="check" className="mt-0.5 size-5 shrink-0 text-blue-700" />{estimationAvailable ? "Le prix est calculé par le serveur avant toute collecte de coordonnées." : "Les réservations en ligne seront affichées uniquement lorsqu’elles seront réellement ouvertes."}</p>
+            <p className="mt-6 flex items-start gap-2 text-sm leading-6 text-slate-600"><Icon name="check" className="mt-0.5 size-5 shrink-0 text-blue-700" />AirProche transmet votre demande. Le chauffeur confirme directement la disponibilité, le tarif et les modalités.</p>
           </div>
           <div className="relative mx-auto w-full max-w-[34rem]">
             <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-[#10213f] shadow-2xl">
@@ -90,7 +85,7 @@ export default async function HomePage() {
           <div className="rounded-[2rem] bg-blue-50 p-8 sm:p-10">
             <Icon name="users" className="size-10 text-blue-700" />
             <p className="mt-8 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Vous organisez le trajet pour quelqu’un d’autre ?</p>
-            <p className="mt-4 leading-7 text-slate-600">Le parcours de réservation distinguera les coordonnées de la personne qui organise et celles du passager. Chacun recevra uniquement les informations qui le concernent.</p>
+            <p className="mt-4 leading-7 text-slate-600">Vous pouvez rechercher et contacter un chauffeur pour un proche. Indiquez uniquement les coordonnées nécessaires et obtenez son accord avant de les transmettre.</p>
           </div>
           <div>
             <SectionHeading eyebrow="Pour vos proches" title="Moins d’incertitude, même à distance" description="Vous savez ce qui est prévu, le passager sait où se rendre, et les besoins particuliers sont signalés avant le trajet." />

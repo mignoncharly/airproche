@@ -39,7 +39,7 @@ export default async function AirportPage({ params }: PageProps) {
     getPublicContent(),
   ]);
   if (!airport) notFound();
-  const drivers = allDrivers.filter((driver) =>
+  const drivers = allDrivers.results.filter((driver) =>
     driver.airports.some((servedAirport) => servedAirport.public_id === airport.public_id),
   );
 
@@ -75,7 +75,7 @@ export default async function AirportPage({ params }: PageProps) {
                     <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Profil vérifié</p>
                     <h2 className="mt-3 text-xl font-black text-slate-950">{driver.display_name}</h2>
                     <p className="mt-2 text-sm text-slate-600">{driver.business_name || "Chauffeur indépendant"}</p>
-                    <Link href={`/chauffeurs/${driver.public_id}`} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-blue-700 hover:underline">Voir et contacter <Icon name="arrow" className="size-4" /></Link>
+                    <Link href={`/chauffeurs/${driver.slug}`} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-blue-700 hover:underline">Voir et contacter <Icon name="arrow" className="size-4" /></Link>
                   </article>
                 ))}
               </div>

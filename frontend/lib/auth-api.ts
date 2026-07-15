@@ -77,6 +77,18 @@ async function mutate(path: string, method: "POST" | "PATCH", body?: unknown) {
   return response;
 }
 
+export async function mutateWithCsrf(path: string, init: { method: "POST" | "PATCH"; body?: string }) {
+  const token = await csrfToken();
+  const response = await fetch(path, {
+    ...init,
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: { "Content-Type": "application/json", "X-CSRFToken": token },
+  });
+  if (!response.ok) throw await parseError(response);
+  return response.json();
+}
+
 export async function registerAccount(input: {
   first_name: string;
   last_name: string;

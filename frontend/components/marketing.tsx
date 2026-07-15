@@ -45,7 +45,7 @@ export function ContactCta({ settings, title = "Préparons votre prochain trajet
         </div>
         <div className="mt-8 flex flex-wrap gap-3 lg:mt-0 lg:shrink-0">
           <Link href="/contact" className="button bg-white text-slate-950 hover:bg-blue-50">{hasPublishedContact ? "Voir les contacts" : "Disponibilité du service"} <Icon name="arrow" className="size-4" /></Link>
-          <Link href="/tarifs" className="button border border-white/25 text-white hover:bg-white/10">Comprendre les tarifs</Link>
+          <Link href="/chauffeurs" className="button border border-white/25 text-white hover:bg-white/10">Voir les chauffeurs</Link>
         </div>
       </div>
     </section>

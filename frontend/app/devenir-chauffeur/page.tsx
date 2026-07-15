@@ -1,0 +1,7 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { PageHero } from "@/components/marketing";
+import { publicMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = publicMetadata("Devenir chauffeur partenaire", "Créez un profil professionnel AirProche pour recevoir des demandes de transferts depuis et vers les aéroports.", "/devenir-chauffeur");
+export default function DriverRegistrationPage() { return <main><PageHero eyebrow="Chauffeurs professionnels" title="Développez votre visibilité pour les transferts aéroport" description="Présentez votre activité, vos aéroports, votre véhicule et vos services. Votre profil reste privé jusqu’à son examen et sa publication." /><section className="site-container grid gap-6 py-16 md:grid-cols-3">{[["Profil complet", "Renseignez vos zones, langues, véhicule, capacités et informations professionnelles."],["Vérification contrôlée", "AirProche examine les justificatifs privés sans les publier."],["Demandes directes", "Vous confirmez vous-même disponibilité, tarif, transport et paiement avec le client."]].map(([title,text]) => <article key={title} className="surface-card p-7"><h2 className="text-xl font-black">{title}</h2><p className="mt-3 text-sm leading-6 text-slate-600">{text}</p></article>)}<div className="md:col-span-3 text-center"><Link className="button button-primary" href="/inscription">Créer mon compte chauffeur</Link><p className="mt-4 text-xs text-slate-500">La création d’un compte ne garantit pas la publication du profil.</p></div></section></main>; }

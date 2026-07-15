@@ -1,6 +1,4 @@
-from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from django.utils.cache import patch_cache_control
 from drf_spectacular.utils import extend_schema
 from rest_framework.permissions import AllowAny
@@ -22,20 +20,8 @@ def public_response(data):
     return response
 
 
-def active_tariffs():
-    from apps.pricing.models import Tariff
-
-    now = timezone.now()
-    return Tariff.objects.filter(
-        is_active=True,
-        airport__is_active=True,
-        service_area__is_active=True,
-        valid_from__lte=now,
-    ).filter(Q(valid_until__isnull=True) | Q(valid_until__gt=now))
-
-
 def published_service_areas():
-    return ServiceArea.objects.filter(is_active=True, tariffs__in=active_tariffs()).distinct()
+    return ServiceArea.objects.filter(is_active=True, tariffs__is_active=True).distinct()
 
 
 def published_airports():

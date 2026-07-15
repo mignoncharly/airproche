@@ -22,6 +22,9 @@ def env_list(name: str, default: str = "") -> list[str]:
 
 
 APP_ENV = os.getenv("APP_ENV", "development").strip().lower()
+MARKETPLACE_ONLY_MODE = env_bool(
+    "MARKETPLACE_ONLY_MODE", not env_bool("DJANGO_USE_SQLITE_FOR_TESTS")
+)
 APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:3000").rstrip("/")
 DEBUG = env_bool("DJANGO_DEBUG", APP_ENV == "development")
 if APP_ENV == "production" and not APP_BASE_URL.startswith("https://"):
@@ -226,6 +229,7 @@ REST_FRAMEWORK = {
         "auth_token": "30/hour",
         "quote": "60/hour",
         "driver_inquiry": "10/hour",
+        "driver_inquiry_mutation": "60/hour",
         "booking_create": "20/hour",
         "booking_access": "30/hour",
         "booking_mutation": "20/hour",

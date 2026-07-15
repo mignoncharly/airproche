@@ -20,9 +20,9 @@ import {
 
 const estimatorSchema = z.object({
   trip_type: z.enum(["airport_pickup", "airport_dropoff"]),
-  airport_id: z.string().uuid("SÃƒÂ©lectionnez un aÃƒÂ©roport."),
-  service_area_id: z.string().uuid("SÃƒÂ©lectionnez une zone."),
-  pickup_at: z.string().min(1, "Indiquez la date et lÃ¢â‚¬â„¢heure."),
+  airport_id: z.string().uuid("Sélectionnez un aéroport."),
+  service_area_id: z.string().uuid("Sélectionnez une zone."),
+  pickup_at: z.string().min(1, "Indiquez la date et l’heure."),
   passenger_count: z.number().int().min(1, "Au moins un passager.").max(50),
   luggage_count: z.number().int().min(0).max(100),
   options: z.record(z.string(), z.number().int().min(0).max(20)),
@@ -120,7 +120,7 @@ export function QuoteEstimator({
         item.service_area_id === values.service_area_id,
     );
     if (!route) {
-      setApiError({ code: "coverage", message: "Ce trajet nÃ¢â‚¬â„¢est pas disponible en estimation automatique." });
+      setApiError({ code: "coverage", message: "Ce trajet n’est pas disponible en estimation automatique." });
       return;
     }
     try {
@@ -142,7 +142,7 @@ export function QuoteEstimator({
       if (error instanceof QuoteApiError) {
         setApiError({ code: error.code, message: error.message });
       } else {
-        setApiError({ code: "request_error", message: "Le service dÃ¢â‚¬â„¢estimation est momentanÃƒÂ©ment indisponible." });
+        setApiError({ code: "request_error", message: "Le service dÃ¢â‚¬â„¢estimation est momentanément indisponible." });
       }
     }
   }
@@ -156,7 +156,7 @@ export function QuoteEstimator({
           </span>
           <div>
             <h2 className="text-xl font-black tracking-tight text-slate-950">Estimer un trajet</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">Aucune coordonnÃƒÂ©e personnelle nÃ¢â‚¬â„¢est demandÃƒÂ©e ÃƒÂ  cette ÃƒÂ©tape.</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">Aucune coordonnée personnelle n’est demandée à cette étape.</p>
           </div>
         </div>
 
@@ -164,14 +164,14 @@ export function QuoteEstimator({
           <label>
             <span className="form-label">Sens du trajet</span>
             <select className="form-input" {...register("trip_type")}>
-              <option value="airport_pickup">De lÃ¢â‚¬â„¢aÃƒÂ©roport vers la zone</option>
-              <option value="airport_dropoff">De la zone vers lÃ¢â‚¬â„¢aÃƒÂ©roport</option>
+              <option value="airport_pickup">De lÃ¢â‚¬â„¢aéroport vers la zone</option>
+              <option value="airport_dropoff">De la zone vers lÃ¢â‚¬â„¢aéroport</option>
             </select>
           </label>
           <label>
-            <span className="form-label">AÃƒÂ©roport</span>
+            <span className="form-label">Aéroport</span>
             <select className="form-input" aria-invalid={Boolean(errors.airport_id)} {...register("airport_id")}>
-              <option value="">SÃƒÂ©lectionner</option>
+              <option value="">Sélectionner</option>
               {availableAirports.map((airport) => (
                 <option key={airport.public_id} value={airport.public_id}>{airport.name} ({airport.iata_code})</option>
               ))}
@@ -181,7 +181,7 @@ export function QuoteEstimator({
           <label>
             <span className="form-label">Zone desservie</span>
             <select className="form-input" disabled={!airportId} aria-invalid={Boolean(errors.service_area_id)} {...register("service_area_id")}>
-              <option value="">SÃƒÂ©lectionner</option>
+              <option value="">Sélectionner</option>
               {availableAreas.map((area) => <option key={area.public_id} value={area.public_id}>{area.name}</option>)}
             </select>
             {errors.service_area_id ? <span className="form-error">{errors.service_area_id.message}</span> : null}
@@ -222,7 +222,7 @@ export function QuoteEstimator({
                     min="0"
                     max={option.maximum_quantity}
                     className="form-input"
-                    aria-label={`QuantitÃƒÂ© pour ${option.label}`}
+                    aria-label={`Quantité pour ${option.label}`}
                     {...register(`options.${option.code}`, { valueAsNumber: true })}
                   />
                   <span className="mt-2 block text-xs text-slate-500">Maximum : {option.maximum_quantity}</span>
@@ -233,7 +233,7 @@ export function QuoteEstimator({
         ) : null}
 
         <button type="submit" className="button button-primary mt-7 w-full sm:w-auto" disabled={isSubmitting}>
-          {isSubmitting ? "Calcul en coursÃ¢â‚¬Â¦" : "Calculer le prix"}
+          {isSubmitting ? "Calcul en cours…" : "Calculer le prix"}
           {!isSubmitting ? <Icon name="arrow" className="size-4" /> : null}
         </button>
       </form>
@@ -243,32 +243,32 @@ export function QuoteEstimator({
           <div>
             <p className="eyebrow">Estimation serveur</p>
             <p className="mt-4 text-4xl font-black tracking-tight text-slate-950">{formatMoney(quote.total_amount, quote.currency)}</p>
-            <p className="mt-2 text-sm text-slate-600">{quote.airport_iata_code} Ã‚Â· {quote.service_area_name}</p>
+            <p className="mt-2 text-sm text-slate-600">{quote.airport_iata_code} · {quote.service_area_name}</p>
             <dl className="mt-6 divide-y divide-slate-200 border-y border-slate-200">
               {quote.lines.map((line) => (
                 <div key={line.code} className="flex justify-between gap-4 py-3 text-sm">
-                  <dt className="text-slate-600">{line.label}{line.quantity > 1 ? ` Ãƒâ€” ${line.quantity}` : ""}</dt>
+                  <dt className="text-slate-600">{line.label}{line.quantity > 1 ? ` × ${line.quantity}` : ""}</dt>
                   <dd className="font-bold text-slate-950">{formatMoney(line.total_amount, quote.currency)}</dd>
                 </div>
               ))}
             </dl>
-            <p className="mt-5 text-xs leading-5 text-slate-500">Devis valide jusquâ€™au {new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(quote.expires_at))}.</p><Link className="button button-primary mt-6" href={`/reservation?quote=${quote.public_id}`}>RÃ©server ce trajet</Link>
+            <p className="mt-5 text-xs leading-5 text-slate-500">Devis valide jusqu’au {new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(quote.expires_at))}.</p><Link className="button button-primary mt-6" href={`/reservation?quote=${quote.public_id}`}>Réserver ce trajet</Link>
           </div>
         ) : apiError ? (
           <div>
             <span className="grid size-11 place-items-center rounded-xl bg-amber-50 text-amber-700"><Icon name="message" className="size-5" /></span>
-            <h2 className="mt-5 text-xl font-black text-slate-950">VÃƒÂ©rification manuelle nÃƒÂ©cessaire</h2>
+            <h2 className="mt-5 text-xl font-black text-slate-950">Vérification manuelle nécessaire</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">{apiError.message}</p>
-            <p className="mt-2 text-xs text-slate-500">RÃƒÂ©fÃƒÂ©rence : {apiError.code}</p>
+            <p className="mt-2 text-xs text-slate-500">Référence : {apiError.code}</p>
             <Link href="/contact" className="button button-secondary mt-6">Nous contacter</Link>
           </div>
         ) : (
           <div>
             <p className="eyebrow">Prix transparent</p>
             <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-950">Le montant vient uniquement du serveur.</h2>
-            <p className="mt-4 text-sm leading-6 text-slate-600">Choisissez un trajet actif pour afficher son tarif et le dÃƒÂ©tail des options. La disponibilitÃƒÂ© sera de nouveau vÃƒÂ©rifiÃƒÂ©e lors de la rÃƒÂ©servation.</p>
+            <p className="mt-4 text-sm leading-6 text-slate-600">Choisissez un trajet actif pour afficher son tarif et le détail des options. La disponibilité sera de nouveau vérifiée lors de la réservation.</p>
             <ul className="mt-6 grid gap-3 text-sm font-semibold text-slate-700">
-              {['Tarif fixe par trajet couvert', 'Options dÃƒÂ©taillÃƒÂ©es sÃƒÂ©parÃƒÂ©ment', 'Estimation limitÃƒÂ©e dans le temps'].map((item) => (
+              {['Tarif fixe par trajet couvert', 'Options détaillées séparément', 'Estimation limitée dans le temps'].map((item) => (
                 <li key={item} className="flex gap-2"><Icon name="check" className="mt-0.5 size-4 shrink-0 text-emerald-700" />{item}</li>
               ))}
             </ul>

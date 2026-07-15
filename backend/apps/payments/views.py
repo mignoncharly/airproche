@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 from drf_spectacular.utils import extend_schema
@@ -26,6 +27,19 @@ class PaymentCheckoutView(APIView):
     @method_decorator(csrf_protect)
     @extend_schema(responses={201: CheckoutResponseSerializer})
     def post(self, request, booking_public_id):
+        if settings.MARKETPLACE_ONLY_MODE:
+            return Response(
+                {
+                    "error": {
+                        "code": "trip_payment_decommissioned",
+                        "message": (
+                            "AirProche n’encaisse pas le prix du transport. Le paiement "
+                            "est convenu directement avec le chauffeur."
+                        ),
+                    }
+                },
+                status=status.HTTP_410_GONE,
+            )
         payment, attempt, checkout_url = create_checkout(
             booking_public_id,
             user=request.user if request.user.is_authenticated else None,

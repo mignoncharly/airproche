@@ -11,10 +11,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Transfert aéroport privé",
-    template: "%s | Transfert aéroport privé",
+    default: "AirProche — Chauffeurs indépendants pour transferts aéroport",
+    template: "%s | AirProche",
   },
-  description: "Accueil et transport privé depuis et vers les aéroports, organisé avec soin.",
+  description: "Trouvez et contactez des chauffeurs indépendants vérifiés pour vos transferts depuis et vers les aéroports.",
   metadataBase: new URL(process.env.APP_BASE_URL ?? "http://localhost:3000"),
   applicationName: "Airproche",
   manifest: "/manifest.webmanifest",

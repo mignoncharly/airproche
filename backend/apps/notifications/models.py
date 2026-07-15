@@ -11,11 +11,16 @@ class EmailNotification(models.Model):
         BOOKING_CREATED = "booking_created", "Booking created"
         BOOKING_STATUS = "booking_status", "Booking status"
         CONTACT_RECEIVED = "contact_received", "Contact received"
+        INQUIRY_CUSTOMER_ACK = "inquiry_customer_ack", "Inquiry customer acknowledgement"
+        INQUIRY_DRIVER_NEW = "inquiry_driver_new", "New inquiry for driver"
+        INQUIRY_STATUS = "inquiry_status", "Inquiry status update"
 
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
         SENT = "sent", "Sent"
         FAILED = "failed", "Failed"
+        RETRYING = "retrying", "Retrying"
+        PERMANENT_FAILURE = "permanent_failure", "Permanent failure"
 
     public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     kind = models.CharField(max_length=32, choices=Kind.choices)
@@ -26,8 +31,14 @@ class EmailNotification(models.Model):
     related_type = models.CharField(max_length=32, blank=True)
     related_public_id = models.UUIDField(null=True, blank=True)
     idempotency_key = models.CharField(max_length=160, unique=True)
-    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(max_length=24, choices=Status.choices, default=Status.PENDING)
     retryable = models.BooleanField(default=True)
+    max_attempts = models.PositiveSmallIntegerField(default=4)
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    provider_identifier = models.CharField(max_length=160, blank=True)
+    error_category = models.CharField(max_length=80, blank=True)
+    safe_error_summary = models.CharField(max_length=300, blank=True)
     sent_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AuditEvent, Driver, DriverAssignment, DriverInquiry, MarketplaceDriverProfile, Vehicle
+from .models import AuditEvent, Driver, DriverAssignment, DriverInquiry, MarketplaceDriverProfile, Vehicle, DriverVerificationDocument, DriverVerificationEvent
 
 
 @admin.register(Driver)
@@ -49,3 +49,18 @@ class AuditEventAdmin(admin.ModelAdmin):
     search_fields = ("object_id", "reason", "actor__email")
     readonly_fields = tuple(field.name for field in AuditEvent._meta.fields)
 
+
+@admin.register(DriverVerificationDocument)
+class DriverVerificationDocumentAdmin(admin.ModelAdmin):
+    list_display = ("profile", "document_type", "review_status", "expires_on", "created_at")
+    list_filter = ("document_type", "review_status")
+    search_fields = ("profile__display_name", "original_name")
+    readonly_fields = ("public_id", "profile", "file", "original_name", "mime_type", "size_bytes", "created_at")
+
+
+@admin.register(DriverVerificationEvent)
+class DriverVerificationEventAdmin(admin.ModelAdmin):
+    list_display = ("profile", "action", "actor", "created_at")
+    list_filter = ("action",)
+    search_fields = ("profile__display_name", "reason")
+    readonly_fields = tuple(field.name for field in DriverVerificationEvent._meta.fields)

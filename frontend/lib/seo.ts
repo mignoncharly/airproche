@@ -44,10 +44,10 @@ export function buildSitemap(
   content: PublicContent,
   data: LocationData,
 ): MetadataRoute.Sitemap {
-  const paths = ["/", "/chauffeurs", "/fonctionnement", "/a-propos"];
+  const paths = ["/", "/chauffeurs", "/fonctionnement", "/a-propos", "/devenir-chauffeur", "/securite"];
   if (content.legal_documents.some((document) => document.kind === "transparency")) paths.push("/transparence");
   if (data.coverage.routes.length) {
-    paths.push("/aeroports", "/zones-desservies", "/tarifs");
+    paths.push("/aeroports", "/zones-desservies");
   }
   if (content.services.length) paths.push("/services");
   if (content.faqs.length) paths.push("/faq");

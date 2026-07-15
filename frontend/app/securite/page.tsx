@@ -1,0 +1,7 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { PageHero } from "@/components/marketing";
+import { publicMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = publicMetadata("Sécurité et confiance", "Comprenez la vérification des profils, le rôle d’AirProche et les réflexes utiles avant un transfert aéroport.", "/securite");
+export default function SafetyPage() { return <main><PageHero eyebrow="Confiance" title="Une mise en relation claire, sans fausse promesse" description="AirProche vérifie et publie des profils professionnels, transmet les demandes et vous aide à signaler un abus." /><section className="site-container grid gap-6 py-16 md:grid-cols-3">{[["Vérification", "Le badge décrit un contrôle documentaire défini ; il ne garantit ni la disponibilité ni l’exécution future d’un trajet."],["Confirmation directe", "Confirmez toujours avec le chauffeur l’identité, le point de rencontre, le tarif, les conditions et le moyen de paiement."],["Protection", "Ne transmettez jamais de données bancaires par e-mail. Signalez tout comportement douteux à AirProche."]].map(([title,text]) => <article key={title} className="surface-card p-7"><h2 className="text-xl font-black">{title}</h2><p className="mt-3 text-sm leading-6 text-slate-600">{text}</p></article>)}<div className="md:col-span-3 text-center"><Link className="button button-primary" href="/contact">Signaler un problème</Link></div></section></main>; }

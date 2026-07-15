@@ -58,7 +58,7 @@ export function CustomerDashboard() {
   }
   useEffect(() => {
     let active = true;
-    getCustomerBookings().then((data) => { if (active) setBookings(data); }).catch((caught) => { if (active) setError(caught instanceof Error ? caught.message : "R?servations indisponibles."); }).finally(() => { if (active) setLoading(false); });
+    getCustomerBookings().then((data) => { if (active) setBookings(data); }).catch((caught) => { if (active) setError(caught instanceof Error ? caught.message : "Réservations indisponibles."); }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
 

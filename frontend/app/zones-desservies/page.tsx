@@ -6,6 +6,7 @@ import { ContactCta, EmptyNotice, PageHero } from "@/components/marketing";
 import { getLocationsAndCoverage } from "@/lib/locations-pricing";
 import { getPublicContent } from "@/lib/public-content";
 import { publicMetadata } from "@/lib/seo";
+import { getDrivers } from "@/lib/marketplace";
 
 export const metadata: Metadata = publicMetadata(
   "Zones desservies",
@@ -21,8 +22,8 @@ const areaLabels = {
 };
 
 export default async function ServiceAreasPage() {
-  const [{ settings }, data] = await Promise.all([getPublicContent(), getLocationsAndCoverage()]);
-  const coveredIds = new Set(data.coverage.routes.map((route) => route.service_area_id));
+  const [{ settings }, data, drivers] = await Promise.all([getPublicContent(), getLocationsAndCoverage(), getDrivers()]);
+  const coveredIds = new Set(drivers.results.flatMap((driver) => driver.service_areas.map((area) => area.public_id)));
   const areas = data.serviceAreas.filter((area) => coveredIds.has(area.public_id));
 
   return (
@@ -30,7 +31,7 @@ export default async function ServiceAreasPage() {
       <PageHero
         eyebrow="Couverture"
         title="Des zones confirmées par un trajet actif"
-        description="La liste est alimentée par les zones et tarifs publiés dans le système opérationnel."
+        description="La liste présente uniquement les zones déclarées par au moins un chauffeur vérifié et publié."
       />
       <section className="site-container py-16 sm:py-24">
         {areas.length ? (
@@ -49,7 +50,7 @@ export default async function ServiceAreasPage() {
           </div>
         ) : (
           <EmptyNotice title="Zones en cours de configuration">
-            <p>Aucune zone ne dispose encore d’un trajet tarifé actif. Les demandes hors couverture peuvent être vérifiées manuellement.</p>
+            <p>Aucune zone n’est encore publiée par un chauffeur vérifié.</p>
           </EmptyNotice>
         )}
       </section>

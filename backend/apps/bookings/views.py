@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 from drf_spectacular.utils import extend_schema
@@ -27,6 +28,19 @@ class BookingCreateView(APIView):
 
     @extend_schema(request=BookingCreateSerializer, responses={201: BookingSerializer})
     def post(self, request):
+        if settings.MARKETPLACE_ONLY_MODE:
+            return Response(
+                {
+                    "error": {
+                        "code": "managed_booking_decommissioned",
+                        "message": (
+                            "AirProche met désormais en relation les clients avec des "
+                            "chauffeurs indépendants. Contactez un chauffeur depuis l’annuaire."
+                        ),
+                    }
+                },
+                status=status.HTTP_410_GONE,
+            )
         serializer = BookingCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         booking, token, duplicate = create_booking(
