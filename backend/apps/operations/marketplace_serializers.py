@@ -191,8 +191,17 @@ class DriverProfileSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         instance = self.instance
-        airports = attrs.get("airports", instance.airports.all() if instance else [])
-        if attrs.get("directions") and not airports:
+        selected_airports = attrs.get("airports")
+        if selected_airports is None and instance is not None:
+            selected_airports = instance.airports.filter(is_active=True)
+        selected_airports = list(selected_airports or [])
+        if not selected_airports and self.initial_data.get("airport_ids"):
+            selected_airports = list(
+                Airport.objects.filter(
+                    public_id__in=self.initial_data.get("airport_ids"), is_active=True
+                )
+            )
+        if attrs.get("directions") and not any(airport.is_active for airport in selected_airports):
             raise serializers.ValidationError(
                 {"airport_ids": "Sélectionnez au moins un aéroport actif."}
             )
