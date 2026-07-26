@@ -1,24 +1,49 @@
-# Airport Transfer Platform
+# Airproche
 
-Production-oriented airport-transfer booking platform for France. Phases 1-6, 8, and 9 are complete; Phase 7 PayPal remains intentionally skipped.
+Airproche is a booking platform for airport transfers in France. It covers the full path from a public price estimate to booking, payment, customer self-service and day-to-day operations.
+
+The central design decision is straightforward: **the browser never decides the price, availability or payment state**. Those facts are calculated and verified by the backend.
 
 ## Architecture
 
-- `frontend/`: Next.js 16 App Router, React, strict TypeScript, Tailwind CSS.
-- `backend/`: Django 6, Django REST Framework, PostgreSQL.
-- `docs/`: architecture and phased delivery documentation.
+| Area | Technology |
+| --- | --- |
+| Frontend | Next.js 16, React, strict TypeScript, Tailwind CSS |
+| Backend | Django 6, Django REST Framework |
+| Database | PostgreSQL |
+| Payments | Stripe Checkout and signed webhooks |
+| Production | Ubuntu, Nginx and systemd |
 
-See [the implementation plan](docs/IMPLEMENTATION_PLAN.md) for product decisions, security boundaries, and acceptance criteria.
+The public site and API share one origin. Nginx routes pages to Next.js and `/api/*` requests to Django.
 
-## Local prerequisites
+## What is implemented
+
+- Managed airports, service areas and tariff validity windows
+- Server-side quotes with capacity and lead-time checks
+- Guest and customer booking flows
+- Email verification and password reset
+- Stripe Checkout, webhook settlement and reconciliation tools
+- Customer dashboard, cancellations, repeat booking and receipts
+- Staff operations dashboard with audited status changes
+- Driver and vehicle assignment with conflict checks
+- Contact and notification delivery tracking
+- Installable PWA shell with a privacy-safe cache policy
+- SEO, structured data and consent-gated analytics
+- Security hardening, retention commands and release qualification
+
+PayPal is intentionally not included. Stripe remains in test mode until production checks and business configuration are complete.
+
+## Run it locally
+
+Requirements:
 
 - Node.js 22+
 - Python 3.12+
 - PostgreSQL 16+
 
-Copy `.env.example` to `.env` and replace local database credentials. `.env` is ignored and must never be committed.
+Copy `.env.example` to `.env` and add local database credentials.
 
-## Backend setup
+### Backend
 
 ```powershell
 python -m venv backend/.venv
@@ -27,16 +52,16 @@ backend/.venv/Scripts/python backend/manage.py migrate
 backend/.venv/Scripts/python backend/manage.py runserver
 ```
 
-Run the isolated foundation tests:
+Fast unit tests can use SQLite:
 
 ```powershell
 $env:DJANGO_USE_SQLITE_FOR_TESTS='true'
 backend/.venv/Scripts/python -m pytest backend
 ```
 
-SQLite is allowed only for fast unit tests. Development, staging, production, and PostgreSQL integration tests use `DATABASE_URL`.
+Development, integration and production environments use PostgreSQL.
 
-## Frontend setup
+### Frontend
 
 ```powershell
 Set-Location frontend
@@ -44,96 +69,26 @@ npm install
 npm run dev
 ```
 
-Quality commands:
+Quality checks:
 
-```powershell
+```bash
 npm run lint
 npm run typecheck
 npm test
 npm run build
 ```
 
-The production topology uses one public origin: Nginx routes pages to Next.js and `/api/*` to Django.
+## Business rules worth knowing
 
-## Managed public content
+- Public routes appear only when an active tariff supports them.
+- A quote is calculated and stored by Django; browser-supplied amounts are rejected.
+- A payment redirect does not confirm a booking. Settlement comes from a signed webhook.
+- Registration stays closed until current Terms and Privacy documents are published.
+- Testimonials require an internal source and verification timestamp.
+- Customer, booking, payment and token data are never placed in the service-worker cache.
 
-Django Admin manages business contact details, services, FAQs, verified testimonials, and versioned legal documents. The public read model is available at `/api/v1/public/content/` with an ETag and a 60-second public cache policy.
+## Production
 
-Testimonials cannot be activated in Django Admin without a verification timestamp and internal source reference. Legal pages show an explicit unpublished state until approved text is published; the application does not ship invented legal copy.
+Deployment is operator-driven and does not use Docker. The runbooks in `docs/` and `deploy/` cover isolated releases, secrets, Nginx, systemd, certificates, backups, restore rehearsals and rollback.
 
-## Customer authentication
-
-The browser uses same-origin Django sessions and obtains a CSRF token before every authentication mutation. Available routes cover registration, login/logout, current user, verified profile updates, e-mail verification, verification resend, and password reset.
-
-Registration remains closed until current Terms and Privacy documents are published in Django Admin. Successful registration records both exact document versions. Verification links expire after 24 hours; password-reset links expire after one hour; only HMAC token digests are stored.
-
-## Coverage and price estimates
-
-Django Admin manages airports, service areas, fixed route tariffs, tariff validity windows, capacities, and fixed/per-unit options. The public airport and zone pages only show records backed by an active tariff; no airport name or payable amount is hardcoded in the frontend.
-
-The estimator at `/tarifs` sends route facts to `/api/v1/public/pricing/quotes/`. Django selects the eligible tariff, enforces lead time, booking horizon and capacity, calculates every line, and stores an expiring immutable quote snapshot. Browser-supplied amount or currency fields are rejected. Permission-scoped staff CRUD is exposed under `/api/v1/staff/` and records changes in Django’s durable admin log.
-
-To publish a route, create an active airport and service area, then create an active tariff for the required direction and validity window. An airport or zone without a complete tariff-backed route remains absent from public coverage.
-
-In local development, Next.js proxies `/api/*` to `BACKEND_INTERNAL_URL`. Production Nginx owns that routing. Configure a real SMTP backend, `DEFAULT_FROM_EMAIL`, and HTTPS `APP_BASE_URL` before production startup.
-
-## Stripe payments
-
-Phase 6 adds server-created Stripe Checkout, signed webhook settlement, payment status polling, and staff refund/reconciliation commands. Configure `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_ENVIRONMENT=test` before enabling online payments. The browser never supplies the payable amount, and a redirect alone never confirms a booking. See [payment architecture](docs/PAYMENT_ARCHITECTURE.md).
-
-## Customer dashboard
-
-Phase 8 adds the authenticated `/compte` dashboard with upcoming and past bookings, payment state, eligible cancellation, fresh-quote repeat booking, and protected printable receipts. Guest booking remains available without an account. Receipts are explicitly booking/payment receipts rather than tax invoices until the VAT and accounting policy is decided. See [customer dashboard](docs/CUSTOMER_DASHBOARD.md).
-
-## Operations dashboard
-
-Phase 9 adds the staff-only `/operations` dashboard with real booking KPIs, filters, controlled transitions, notes, payment/refund visibility, and driver/vehicle assignment. Assignment conflicts and capacity overrides require an explicit reason and all sensitive changes are audited. See [operations dashboard](docs/OPERATIONS_DASHBOARD.md).
-## Notifications and contact
-
-Phase 10 persists supported email notifications and delivery attempts, sends
-booking/account/contact mail outside business transactions, and exposes
-permission-scoped staff observability and retry actions. The public contact form
-uses CSRF, rate limiting, a honeypot, a form-age trap, fixed topics, control
-character rejection, and idempotency. See
-[notifications and contact](docs/NOTIFICATIONS_CONTACT.md).
-## Progressive Web App
-
-Phase 11 adds an installable public shell, native Android prompting where
-supported, accurate Safari installation guidance, explicit service-worker
-updates, and a generic offline page. Cache Storage contains only a fixed static
-allow-list and never customer, booking, payment, authenticated API, cookie, or
-token data. See [PWA architecture](docs/PWA.md).
-
-## SEO, analytics, and performance
-
-Phase 12 publishes canonical metadata, robots and sitemap output, and JSON-LD
-only from real public content and tariff-backed locations. Conversion events
-are consent-gated, schema allow-listed, and reject personal data before any
-dispatch. A Playwright Pixel 7 profile enforces checked-in navigation, script,
-layout-shift, and overflow budgets. See
-[SEO, analytics, and performance](docs/SEO_ANALYTICS_PERFORMANCE.md).
-
-## Security and privacy
-
-Phase 13 adds centralized Origin and private-cache enforcement, permission-scoped
-staff access, a mandatory production staff network gate, fragment-only bearer
-links, explicit Stripe live-mode confirmation, production CSP, log redaction,
-shared throttling, retention/anonymization commands, and repeatable dependency
-and secret scans. See [security and privacy hardening](docs/SECURITY_PRIVACY.md).
-
-## Release qualification
-
-Run `scripts/release-qualification.sh` from a clean commit for backend checks,
-all tests, frontend production/browser checks, dependency audits, and repository
-safety scans. The dedicated PostgreSQL backup/restore rehearsal is required
-before production deployment. See [release qualification](docs/RELEASE_QUALIFICATION.md).
-
-## Production deployment
-
-The isolated Ubuntu deployment is operator-driven and does not use Docker.
-Start with [the deployment runbook](docs/DEPLOYMENT.md) and
-[backup/restore runbook](docs/BACKUP_AND_RESTORE.md). The scripts generate
-Airproche-only secrets/resources, deploy immutable Git SHA releases, use
-app-specific systemd/Nginx/certificate files, keep Stripe in test mode, and do
-not provision Redis or PayPal. Production has not been deployed until the
-runbook's operator and post-deployment checks pass.
+Before calling an installation production-ready, run `scripts/release-qualification.sh` from a clean commit and complete the PostgreSQL backup/restore rehearsal.
